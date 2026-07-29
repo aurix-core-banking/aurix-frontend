@@ -1,0 +1,27 @@
+{
+    "name": "aurix-frontend-monorepo",
+    "private": true,
+    "version": "1.0.0",
+    "packageManager": "npm@10.2.4",
+    "workspaces": [
+        "aurix-admin",
+        "aurix-web",
+        "aurix-mobile"
+    ],
+    "scripts": {
+        "build": "turbo run build",
+        "dev": "turbo run dev",
+        "lint": "turbo run lint",
+        "test": "turbo run test"
+    },
+    "devDependencies": {
+        "ajv": "^8.17.1",
+        "ajv-keywords": "^5.1.0",
+        "turbo": "latest"
+    },
+    "overrides": {
+        "react": "^18.2.0",
+        "react-dom": "^18.2.0",
+        "@types/react": "^18.2.0"
+    }
+}

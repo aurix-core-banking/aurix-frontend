@@ -1,0 +1,9 @@
+{
+  "short_name": "AUREUS",
+  "name": "AUREUS Financial Cloud Unified Suite",
+  "icons": [],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#0F172A",
+  "background_color": "#090D16"
+}

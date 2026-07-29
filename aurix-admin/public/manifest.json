@@ -1,0 +1,9 @@
+{
+  "short_name": "AUREUS Admin",
+  "name": "AUREUS Core Banking - Admin Panel",
+  "icons": [],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#1976d2",
+  "background_color": "#ffffff"
+}
