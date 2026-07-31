@@ -24,11 +24,14 @@ const TransacaoFilter = (props) => (
     <SelectInput
       source="tipoTransacao"
       choices={[
-        { id: 'DEPOSITO', name: 'Depósito' },
-        { id: 'SAQUE', name: 'Saque' },
-        { id: 'TRANSFERENCIA', name: 'Transferência' },
-        { id: 'PAGAMENTO', name: 'Pagamento' },
         { id: 'PIX', name: 'PIX' },
+        { id: 'TED', name: 'TED' },
+        { id: 'DOC', name: 'DOC' },
+        { id: 'SAQUE', name: 'Saque' },
+        { id: 'DEPOSITO', name: 'Depósito' },
+        { id: 'TRANSFERENCIA_INTERNA', name: 'Transferência Interna' },
+        { id: 'PAGAMENTO_BOLETO', name: 'Pagamento de Boleto' },
+        { id: 'PAGAMENTO_CARTAO', name: 'Pagamento de Cartão' },
       ]}
     />
     <SelectInput
@@ -38,6 +41,7 @@ const TransacaoFilter = (props) => (
         { id: 'PROCESSADA', name: 'Processada' },
         { id: 'CANCELADA', name: 'Cancelada' },
         { id: 'FALHADA', name: 'Falhada' },
+        { id: 'REVERTIDA', name: 'Revertida' },
       ]}
     />
     <DateInput source="dataInicio" label="Data Início" />
@@ -55,7 +59,7 @@ const ListActions = () => (
 const ValorField = ({ record }) => {
   const valor = record?.valor || 0;
   const tipo = record?.tipoTransacao;
-  const prefix = tipo === 'SAQUE' || tipo === 'TRANSFERENCIA' ? '-' : '+';
+  const prefix = tipo === 'SAQUE' || tipo === 'TRANSFERENCIA_INTERNA' ? '-' : '+';
   return `${prefix}R$ ${valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
 };
 

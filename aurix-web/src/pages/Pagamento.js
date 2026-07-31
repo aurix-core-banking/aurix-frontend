@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   Box,
   Card,
@@ -18,6 +18,7 @@ import { Payment } from '@mui/icons-material';
 import numeral from 'numeral';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { apiService } from '../services/apiService';
 
 const boletoMock = {
   descricao: 'Concessionária ABC Ltda',
@@ -33,28 +34,42 @@ function Pagamento({ user }) {
   const [boletoInfo, setBoletoInfo] = useState(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    if (codigoBarras) {
-      setBoletoInfo(boletoMock);
+  const handleConsultar = async () => {
+    if (!codigoBarras) return;
+    setLoading(true);
+    try {
+      const data = await apiService.get('/boletos/consultar', { params: { codigoBarras } });
+      setBoletoInfo(data);
       setSuccess(false);
-    } else {
-      setBoletoInfo(null);
+    } catch (error) {
+      setBoletoInfo({
+        descricao: 'Boleto não encontrado',
+        vencimento: new Date().toISOString(),
+        valor: 0,
+        multa: 0,
+        juros: 0,
+        status: 'ERRO',
+      });
+    } finally {
+      setLoading(false);
     }
-  }, [codigoBarras]);
-
-  const handleConsultar = () => {
-    setBoletoInfo(boletoMock);
-    setSuccess(false);
   };
 
-  const handlePagar = () => {
-    setConfirmOpen(true);
-  };
-
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     setConfirmOpen(false);
-    setSuccess(true);
+    try {
+      await apiService.criarTransacao({
+        tipo: 'PAGAMENTO_BOLETO',
+        descricao: `Pagamento ${boletoInfo.descricao}`,
+        valor: boletoInfo.valor + boletoInfo.multa + boletoInfo.juros,
+        codigoBarras,
+      });
+      setSuccess(true);
+    } catch (error) {
+      console.error('Erro ao pagar boleto:', error);
+    }
   };
 
   const handleCloseConfirm = () => {

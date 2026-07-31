@@ -29,6 +29,21 @@ api.interceptors.response.use(
 );
 
 export const apiService = {
+  async get(url, config) {
+    const response = await api.get(url, config);
+    return response.data;
+  },
+
+  async post(url, data, config) {
+    const response = await api.post(url, data, config);
+    return response.data;
+  },
+
+  async put(url, data, config) {
+    const response = await api.put(url, data, config);
+    return response.data;
+  },
+
   async getContas() {
     const response = await api.get('/contas');
     return response.data;
@@ -138,6 +153,16 @@ export const apiService = {
 
   async adicionarDocumentoPJ(id, doc) {
     await api.post(`/onboarding/contas/pj/${id}/documentos`, doc);
+  },
+
+  async atualizarUsuario(data) {
+    const response = await api.put('/usuarios/me', data);
+    return response.data;
+  },
+
+  async atualizarConfiguracoes(data) {
+    const response = await api.put('/usuarios/me/configuracoes', data);
+    return response.data;
   },
 };
 

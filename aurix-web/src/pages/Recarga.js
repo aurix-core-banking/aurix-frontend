@@ -21,6 +21,7 @@ import {
   ToggleButtonGroup,
 } from '@mui/material';
 import { PhoneAndroid } from '@mui/icons-material';
+import { apiService } from '../services/apiService';
 
 const operadoras = ['Vivo', 'Claro', 'TIM', 'Oi'];
 
@@ -51,9 +52,16 @@ function Recarga({ user }) {
     setConfirmOpen(true);
   };
 
-  const handleConfirm = () => {
-    setConfirmOpen(false);
-    setSuccess(true);
+  const handleConfirm = async () => {
+    const valorFinal = valor === 'outro' ? parseFloat(outroValor) : valor;
+    try {
+      await apiService.criarTransacao({ tipo: 'RECARGA', descricao: `Recarga ${operadora} ${telefone}`, valor: valorFinal });
+      setConfirmOpen(false);
+      setSuccess(true);
+    } catch (error) {
+      console.error('Erro na recarga:', error);
+      setConfirmOpen(false);
+    }
   };
 
   const handleCloseConfirm = () => {

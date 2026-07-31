@@ -59,8 +59,8 @@ function App() {
         senha: credentials.senha,
         token: credentials.token,
       });
-      localStorage.setItem('aurix_token', response.token || 'mock_token');
-      setUser(response.user || credentials);
+      localStorage.setItem('aurix_token', response.token);
+      setUser(response.user);
       setIsAuthenticated(true);
       showNotification('Login realizado com sucesso!', 'success');
     } catch (error) {

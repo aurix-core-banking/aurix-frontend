@@ -16,10 +16,12 @@ export const ComplianceCreate = (props) => (
         source="tipoRegulacao"
         label="Tipo de Regulação"
         choices={[
-          { id: 'BACEN', name: 'BACEN' },
-          { id: 'CVM', name: 'CVM' },
-          { id: 'CADE', name: 'CADE' },
-          { id: 'ANATEL', name: 'ANATEL' },
+          { id: 'LEI', name: 'Lei' },
+          { id: 'DECRETO', name: 'Decreto' },
+          { id: 'RESOLUCAO', name: 'Resolução' },
+          { id: 'CIRCULAR', name: 'Circular' },
+          { id: 'INSTRUCAO', name: 'Instrução' },
+          { id: 'PORTARIA', name: 'Portaria' },
         ]}
         validate={[required()]}
       />
@@ -34,12 +36,14 @@ export const ComplianceCreate = (props) => (
         source="status"
         label="Status"
         choices={[
-          { id: 'PENDENTE', name: 'Pendente' },
           { id: 'EM_ANALISE', name: 'Em Análise' },
-          { id: 'APROVADO', name: 'Aprovado' },
-          { id: 'REJEITADO', name: 'Rejeitado' },
+          { id: 'CONFORME', name: 'Conforme' },
+          { id: 'NAO_CONFORME', name: 'Não Conforme' },
+          { id: 'NAO_CONFORME_CRITICO', name: 'Não Conforme Crítico' },
+          { id: 'PENDENTE_CORRECAO', name: 'Pendente Correção' },
+          { id: 'CORRIGIDO', name: 'Corrigido' },
         ]}
-        defaultValue="PENDENTE"
+        defaultValue="EM_ANALISE"
         validate={[required()]}
       />
     </SimpleForm>

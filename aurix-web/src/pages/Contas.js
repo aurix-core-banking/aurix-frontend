@@ -38,6 +38,8 @@ import {
   QrCode
 } from '@mui/icons-material';
 
+import { apiService } from '../services/apiService';
+
 const Contas = ({ user }) => {
   const [loading, setLoading] = useState(true);
   const [contas, setContas] = useState([]);
@@ -47,50 +49,15 @@ const Contas = ({ user }) => {
   useEffect(() => {
     const loadContas = async () => {
       setLoading(true);
-      
-      // Simular carregamento
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Mock data
-      setContas([
-        {
-          id: 1,
-          numero: '12345-6',
-          agencia: '0001',
-          tipo: 'Corrente',
-          saldo: 15750.50,
-          limite: 5000.00,
-          status: 'Ativa',
-          dataAbertura: '2020-01-15',
-          rendimento: 0.5
-        },
-        {
-          id: 2,
-          numero: '67890-1',
-          agencia: '0001',
-          tipo: 'Poupança',
-          saldo: 25000.00,
-          limite: 0,
-          status: 'Ativa',
-          dataAbertura: '2020-01-15',
-          rendimento: 0.5
-        },
-        {
-          id: 3,
-          numero: '11111-2',
-          agencia: '0001',
-          tipo: 'Investimento',
-          saldo: 50000.00,
-          limite: 0,
-          status: 'Ativa',
-          dataAbertura: '2021-03-10',
-          rendimento: 1.2
-        }
-      ]);
-      
-      setLoading(false);
+      try {
+        const data = await apiService.getContas();
+        setContas(Array.isArray(data) ? data : []);
+      } catch (error) {
+        console.error('Erro ao carregar contas:', error);
+      } finally {
+        setLoading(false);
+      }
     };
-    
     loadContas();
   }, []);
 

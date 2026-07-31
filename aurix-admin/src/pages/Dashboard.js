@@ -88,29 +88,33 @@ export const Dashboard = () => {
     Promise.all([fetchPf, fetchPj]).finally(() => setLoadingMetrics(false));
   }, []);
 
-  const transacoesPorMes = [
-    { mes: 'Jan', valor: 4000 },
-    { mes: 'Fev', valor: 3000 },
-    { mes: 'Mar', valor: 2000 },
-    { mes: 'Abr', valor: 2780 },
-    { mes: 'Mai', valor: 1890 },
-    { mes: 'Jun', valor: 2390 },
-  ];
+  const [transacoesPorMes, setTransacoesPorMes] = React.useState([
+    { mes: 'Jan', valor: 0 }, { mes: 'Fev', valor: 0 }, { mes: 'Mar', valor: 0 },
+    { mes: 'Abr', valor: 0 }, { mes: 'Mai', valor: 0 }, { mes: 'Jun', valor: 0 },
+  ]);
 
-  const tiposConta = [
-    { name: 'Conta Corrente', value: 45 },
-    { name: 'Poupança', value: 30 },
-    { name: 'Investimento', value: 25 },
-  ];
+  const [tiposConta, setTiposConta] = React.useState([
+    { name: 'Conta Corrente', value: 0 }, { name: 'Poupança', value: 0 }, { name: 'Investimento', value: 0 },
+  ]);
 
-  const rendimentoInvestimentos = [
-    { mes: 'Jan', rendimento: 2.5 },
-    { mes: 'Fev', rendimento: 3.2 },
-    { mes: 'Mar', rendimento: 2.8 },
-    { mes: 'Abr', rendimento: 4.1 },
-    { mes: 'Mai', rendimento: 3.7 },
-    { mes: 'Jun', rendimento: 4.5 },
-  ];
+  const [rendimentoInvestimentos, setRendimentoInvestimentos] = React.useState([
+    { mes: 'Jan', rendimento: 0 }, { mes: 'Fev', rendimento: 0 }, { mes: 'Mar', rendimento: 0 },
+    { mes: 'Abr', rendimento: 0 }, { mes: 'Mai', rendimento: 0 }, { mes: 'Jun', rendimento: 0 },
+  ]);
+
+  React.useEffect(() => {
+    const token = localStorage.getItem('token');
+    const headers = new Headers({ 'Authorization': token ? `Bearer ${token}` : '', 'Content-Type': 'application/json' });
+    const baseUrl = process.env.REACT_APP_API_URL || 'http://localhost:8080/api';
+
+    fetchUtils.fetchJson(`${baseUrl}/dashboard/metricas`, { headers })
+      .then(({ json }) => {
+        if (json.transacoesPorMes) setTransacoesPorMes(json.transacoesPorMes);
+        if (json.tiposConta) setTiposConta(json.tiposConta);
+        if (json.rendimentoInvestimentos) setRendimentoInvestimentos(json.rendimentoInvestimentos);
+      })
+      .catch(() => {});
+  }, []);
 
   return (
     <Box sx={{ flexGrow: 1, p: 3 }}>

@@ -25,7 +25,8 @@ const ContaFilter = (props) => (
       choices={[
         { id: 'CORRENTE', name: 'Corrente' },
         { id: 'POUPANCA', name: 'Poupança' },
-        { id: 'INVESTIMENTO', name: 'Investimento' },
+        { id: 'SALARIO', name: 'Salário' },
+        { id: 'EMPRESARIAL', name: 'Empresarial' },
       ]}
     />
     <SelectInput
@@ -34,6 +35,8 @@ const ContaFilter = (props) => (
         { id: 'ATIVA', name: 'Ativa' },
         { id: 'INATIVA', name: 'Inativa' },
         { id: 'BLOQUEADA', name: 'Bloqueada' },
+        { id: 'SUSPENSA', name: 'Suspensa' },
+        { id: 'FECHADA', name: 'Fechada' },
       ]}
     />
   </Filter>

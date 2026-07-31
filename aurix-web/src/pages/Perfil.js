@@ -11,6 +11,7 @@ import {
   Divider,
 } from '@mui/material';
 import { Edit, Save, Cancel } from '@mui/icons-material';
+import { apiService } from '../services/apiService';
 
 function Perfil({ user }) {
   const [editing, setEditing] = useState(false);
@@ -21,7 +22,12 @@ function Perfil({ user }) {
     cpf: user?.cpf || '',
   });
 
-  const handleSave = () => {
+  const handleSave = async () => {
+    try {
+      await apiService.atualizarUsuario({ nome: formData.nome, telefone: formData.telefone });
+    } catch (error) {
+      console.error('Erro ao salvar perfil:', error);
+    }
     setEditing(false);
   };
 

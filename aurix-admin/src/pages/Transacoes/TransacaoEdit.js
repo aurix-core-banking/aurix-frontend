@@ -18,11 +18,14 @@ export const TransacaoEdit = (props) => (
         source="tipoTransacao"
         label="Tipo de Transação"
         choices={[
-          { id: 'DEPOSITO', name: 'Depósito' },
-          { id: 'SAQUE', name: 'Saque' },
-          { id: 'TRANSFERENCIA', name: 'Transferência' },
-          { id: 'PAGAMENTO', name: 'Pagamento' },
           { id: 'PIX', name: 'PIX' },
+          { id: 'TED', name: 'TED' },
+          { id: 'DOC', name: 'DOC' },
+          { id: 'SAQUE', name: 'Saque' },
+          { id: 'DEPOSITO', name: 'Depósito' },
+          { id: 'TRANSFERENCIA_INTERNA', name: 'Transferência Interna' },
+          { id: 'PAGAMENTO_BOLETO', name: 'Pagamento de Boleto' },
+          { id: 'PAGAMENTO_CARTAO', name: 'Pagamento de Cartão' },
         ]}
         validate={[required()]}
       />
@@ -54,6 +57,7 @@ export const TransacaoEdit = (props) => (
           { id: 'PROCESSADA', name: 'Processada' },
           { id: 'CANCELADA', name: 'Cancelada' },
           { id: 'FALHADA', name: 'Falhada' },
+          { id: 'REVERTIDA', name: 'Revertida' },
         ]}
         validate={[required()]}
       />

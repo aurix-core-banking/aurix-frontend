@@ -261,9 +261,14 @@ function PIX({ user }) {
               <Typography variant="h6" gutterBottom>
                 Minhas Chaves PIX
               </Typography>
-              <Alert severity="info">
-                Funcionalidade de gerenciamento de chaves PIX em desenvolvimento
-              </Alert>
+              <Button variant="outlined" onClick={async () => {
+                try {
+                  const chaves = await apiService.get('/pix/chaves');
+                  setMessage({ type: 'success', text: `${chaves.length} chaves cadastradas` });
+                } catch (e) {
+                  setMessage({ type: 'error', text: 'Erro ao carregar chaves' });
+                }
+              }}>Carregar Chaves</Button>
             </Box>
           )}
 

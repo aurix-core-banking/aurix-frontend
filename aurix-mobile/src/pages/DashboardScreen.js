@@ -14,6 +14,7 @@ import LinearGradient from 'react-native-linear-gradient';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 
 import { Colors } from '../constants/Colors';
+import apiService from '../services/apiService';
 
 const { width } = Dimensions.get('window');
 
@@ -31,71 +32,22 @@ const DashboardScreen = ({ navigation }) => {
   const loadData = async () => {
     setLoading(true);
     try {
-      // Simular carregamento de dados
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      setTransacoes([
-        {
-          id: 1,
-          tipo: 'PIX',
-          descricao: 'PIX recebido - João Silva',
-          valor: 500.00,
-          data: '2024-01-15 14:30',
-          status: 'concluida'
-        },
-        {
-          id: 2,
-          tipo: 'TED',
-          descricao: 'TED enviada - Conta poupança',
-          valor: -1000.00,
-          data: '2024-01-15 10:15',
-          status: 'concluida'
-        },
-        {
-          id: 3,
-          tipo: 'PIX',
-          descricao: 'PIX enviado - Maria Santos',
-          valor: -250.00,
-          data: '2024-01-14 16:45',
-          status: 'concluida'
-        },
-        {
-          id: 4,
-          tipo: 'DOC',
-          descricao: 'DOC enviado - Empresa XYZ',
-          valor: -5000.00,
-          data: '2024-01-14 09:20',
-          status: 'processando'
-        },
-      ]);
+      const contas = await apiService.getContas();
+      const total = contas.reduce((sum, c) => sum + (c.saldo || 0), 0);
+      setSaldo(total);
 
-      setCartoes([
-        {
-          id: 1,
-          numero: '**** **** **** 1234',
-          tipo: 'Crédito',
-          limite: 5000.00,
-          utilizado: 1250.00,
-          vencimento: '2024-02-15'
-        },
-      ]);
+      const transacoesData = await apiService.getTransacoes(1, {});
+      setTransacoes(transacoesData.slice(0, 5));
 
-      setInvestimentos([
-        {
-          id: 1,
-          nome: 'CDB 100% CDI',
-          valor: 10000.00,
-          rendimento: 125.30,
-          percentual: 1.25
-        },
-        {
-          id: 2,
-          nome: 'LCI 95% CDI',
-          valor: 5000.00,
-          rendimento: 45.20,
-          percentual: 0.90
-        },
-      ]);
+      try {
+        const cartoesData = await apiService.getCartoes(1);
+        setCartoes(cartoesData);
+      } catch (e) { /* cartoes podem nao existir */ }
+
+      try {
+        const investimentosData = await apiService.getInvestimentos(1);
+        setInvestimentos(investimentosData);
+      } catch (e) { /* investimentos podem nao existir */ }
     } catch (error) {
       Alert.alert('Erro', 'Falha ao carregar dados');
     } finally {
@@ -165,7 +117,7 @@ const DashboardScreen = ({ navigation }) => {
       title: 'Pagar',
       icon: 'payment',
       color: Colors.accent,
-      onPress: () => Alert.alert('Em breve', 'Funcionalidade em desenvolvimento')
+      onPress: () => navigation.navigate('Pagamento')
     },
   ];
 

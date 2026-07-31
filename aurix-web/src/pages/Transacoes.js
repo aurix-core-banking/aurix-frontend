@@ -61,10 +61,11 @@ function Transacoes({ user }) {
 
   const getStatusColor = (status) => {
     const colors = {
-      CONCLUIDA: 'success',
+      PROCESSADA: 'success',
       PENDENTE: 'warning',
       CANCELADA: 'error',
-      PROCESSANDO: 'info',
+      FALHADA: 'error',
+      REVERTIDA: 'info',
     };
     return colors[status] || 'default';
   };
@@ -104,7 +105,9 @@ function Transacoes({ user }) {
                   <MenuItem value="PIX">PIX</MenuItem>
                   <MenuItem value="TED">TED</MenuItem>
                   <MenuItem value="DOC">DOC</MenuItem>
-                  <MenuItem value="TRANSFERENCIA">Transferência</MenuItem>
+                  <MenuItem value="TRANSFERENCIA_INTERNA">Transferência Interna</MenuItem>
+                  <MenuItem value="PAGAMENTO_BOLETO">Pagamento de Boleto</MenuItem>
+                  <MenuItem value="PAGAMENTO_CARTAO">Pagamento de Cartão</MenuItem>
                 </Select>
               </FormControl>
             </Grid>
@@ -116,9 +119,11 @@ function Transacoes({ user }) {
                   onChange={(e) => setFiltros({ ...filtros, status: e.target.value })}
                 >
                   <MenuItem value="">Todos</MenuItem>
-                  <MenuItem value="CONCLUIDA">Concluída</MenuItem>
                   <MenuItem value="PENDENTE">Pendente</MenuItem>
+                  <MenuItem value="PROCESSADA">Processada</MenuItem>
                   <MenuItem value="CANCELADA">Cancelada</MenuItem>
+                  <MenuItem value="FALHADA">Falhada</MenuItem>
+                  <MenuItem value="REVERTIDA">Revertida</MenuItem>
                 </Select>
               </FormControl>
             </Grid>

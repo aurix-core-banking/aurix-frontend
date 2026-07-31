@@ -7,26 +7,33 @@ export const STATUS_CLIENTE = [
   { id: 'ATIVO', name: 'Ativo' },
   { id: 'INATIVO', name: 'Inativo' },
   { id: 'BLOQUEADO', name: 'Bloqueado' },
+  { id: 'SUSPENSO', name: 'Suspenso' },
 ];
 
 export const TIPOS_CONTA = [
   { id: 'CORRENTE', name: 'Corrente' },
   { id: 'POUPANCA', name: 'Poupança' },
-  { id: 'INVESTIMENTO', name: 'Investimento' },
+  { id: 'SALARIO', name: 'Salário' },
+  { id: 'EMPRESARIAL', name: 'Empresarial' },
 ];
 
 export const STATUS_CONTA = [
   { id: 'ATIVA', name: 'Ativa' },
   { id: 'INATIVA', name: 'Inativa' },
   { id: 'BLOQUEADA', name: 'Bloqueada' },
+  { id: 'SUSPENSA', name: 'Suspensa' },
+  { id: 'FECHADA', name: 'Fechada' },
 ];
 
 export const TIPOS_TRANSACAO = [
-  { id: 'DEPOSITO', name: 'Depósito' },
-  { id: 'SAQUE', name: 'Saque' },
-  { id: 'TRANSFERENCIA', name: 'Transferência' },
-  { id: 'PAGAMENTO', name: 'Pagamento' },
   { id: 'PIX', name: 'PIX' },
+  { id: 'TED', name: 'TED' },
+  { id: 'DOC', name: 'DOC' },
+  { id: 'SAQUE', name: 'Saque' },
+  { id: 'DEPOSITO', name: 'Depósito' },
+  { id: 'TRANSFERENCIA_INTERNA', name: 'Transferência Interna' },
+  { id: 'PAGAMENTO_BOLETO', name: 'Pagamento de Boleto' },
+  { id: 'PAGAMENTO_CARTAO', name: 'Pagamento de Cartão' },
 ];
 
 export const STATUS_TRANSACAO = [
@@ -34,6 +41,7 @@ export const STATUS_TRANSACAO = [
   { id: 'PROCESSADA', name: 'Processada' },
   { id: 'CANCELADA', name: 'Cancelada' },
   { id: 'FALHADA', name: 'Falhada' },
+  { id: 'REVERTIDA', name: 'Revertida' },
 ];
 
 export const TIPOS_INVESTIMENTO = [
@@ -65,17 +73,21 @@ export const STATUS_PIX = [
 ];
 
 export const TIPOS_REGULACAO = [
-  { id: 'BACEN', name: 'BACEN' },
-  { id: 'CVM', name: 'CVM' },
-  { id: 'CADE', name: 'CADE' },
-  { id: 'ANATEL', name: 'ANATEL' },
+  { id: 'LEI', name: 'Lei' },
+  { id: 'DECRETO', name: 'Decreto' },
+  { id: 'RESOLUCAO', name: 'Resolução' },
+  { id: 'CIRCULAR', name: 'Circular' },
+  { id: 'INSTRUCAO', name: 'Instrução' },
+  { id: 'PORTARIA', name: 'Portaria' },
 ];
 
 export const STATUS_COMPLIANCE = [
-  { id: 'PENDENTE', name: 'Pendente' },
   { id: 'EM_ANALISE', name: 'Em Análise' },
-  { id: 'APROVADO', name: 'Aprovado' },
-  { id: 'REJEITADO', name: 'Rejeitado' },
+  { id: 'CONFORME', name: 'Conforme' },
+  { id: 'NAO_CONFORME', name: 'Não Conforme' },
+  { id: 'NAO_CONFORME_CRITICO', name: 'Não Conforme Crítico' },
+  { id: 'PENDENTE_CORRECAO', name: 'Pendente Correção' },
+  { id: 'CORRIGIDO', name: 'Corrigido' },
 ];
 
 export const TIPOS_ACAO_AUDITORIA = [

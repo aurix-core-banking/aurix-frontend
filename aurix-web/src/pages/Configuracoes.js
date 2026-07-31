@@ -12,6 +12,7 @@ import {
   Grid,
 } from '@mui/material';
 import { Security, Notifications, Language } from '@mui/icons-material';
+import { apiService } from '../services/apiService';
 
 function Configuracoes({ user }) {
   const [configs, setConfigs] = useState({
@@ -23,7 +24,9 @@ function Configuracoes({ user }) {
   });
 
   const handleToggle = (key) => {
-    setConfigs({ ...configs, [key]: !configs[key] });
+    const newConfigs = { ...configs, [key]: !configs[key] };
+    setConfigs(newConfigs);
+    apiService.atualizarConfiguracoes(newConfigs).catch(err => console.error('Erro ao salvar:', err));
   };
 
   return (

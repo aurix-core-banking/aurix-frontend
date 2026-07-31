@@ -21,19 +21,23 @@ const ComplianceFilter = (props) => (
     <SelectInput
       source="tipoRegulacao"
       choices={[
-        { id: 'BACEN', name: 'BACEN' },
-        { id: 'CVM', name: 'CVM' },
-        { id: 'CADE', name: 'CADE' },
-        { id: 'ANATEL', name: 'ANATEL' },
+        { id: 'LEI', name: 'Lei' },
+        { id: 'DECRETO', name: 'Decreto' },
+        { id: 'RESOLUCAO', name: 'Resolução' },
+        { id: 'CIRCULAR', name: 'Circular' },
+        { id: 'INSTRUCAO', name: 'Instrução' },
+        { id: 'PORTARIA', name: 'Portaria' },
       ]}
     />
     <SelectInput
       source="status"
       choices={[
-        { id: 'PENDENTE', name: 'Pendente' },
         { id: 'EM_ANALISE', name: 'Em Análise' },
-        { id: 'APROVADO', name: 'Aprovado' },
-        { id: 'REJEITADO', name: 'Rejeitado' },
+        { id: 'CONFORME', name: 'Conforme' },
+        { id: 'NAO_CONFORME', name: 'Não Conforme' },
+        { id: 'NAO_CONFORME_CRITICO', name: 'Não Conforme Crítico' },
+        { id: 'PENDENTE_CORRECAO', name: 'Pendente Correção' },
+        { id: 'CORRIGIDO', name: 'Corrigido' },
       ]}
     />
   </Filter>

@@ -18,12 +18,12 @@ export const mockUser = {
 export const mockContas = [
   { id: '1', tipo: 'CORRENTE', saldo: 15750.5, numero: '12345-6', agencia: '0001', status: 'ATIVA', dataAbertura: '2024-01-15', limite: 5000, rendimento: 0.5 },
   { id: '2', tipo: 'POUPANCA', saldo: 25000, numero: '12345-7', agencia: '0001', status: 'ATIVA', dataAbertura: '2024-03-10', rendimento: 0.5 },
-  { id: '3', tipo: 'INVESTIMENTO', saldo: 50000, numero: '12345-8', agencia: '0001', status: 'ATIVA', dataAbertura: '2024-06-20', rendimento: 1.2 },
+  { id: '3', tipo: 'EMPRESARIAL', saldo: 50000, numero: '12345-8', agencia: '0001', status: 'ATIVA', dataAbertura: '2024-06-20', rendimento: 1.2 },
 ];
 
 export const mockTransacoes = [
-  { id: '1', codigo: 'TXN-001', tipo: 'PIX', descricao: 'Transferencia para Joao', valor: 1500, data: '2024-12-01T10:30:00', status: 'CONCLUIDA', contaId: '1' },
-  { id: '2', codigo: 'TXN-002', tipo: 'TED', descricao: 'Pagamento fornecedor', valor: 3500, data: '2024-12-02T14:00:00', status: 'CONCLUIDA', contaId: '1' },
+  { id: '1', codigo: 'TXN-001', tipo: 'PIX', descricao: 'Transferencia para Joao', valor: 1500, data: '2024-12-01T10:30:00', status: 'PROCESSADA', contaId: '1' },
+  { id: '2', codigo: 'TXN-002', tipo: 'TED', descricao: 'Pagamento fornecedor', valor: 3500, data: '2024-12-02T14:00:00', status: 'PROCESSADA', contaId: '1' },
   { id: '3', codigo: 'TXN-003', tipo: 'DOC', descricao: 'Aluguel', valor: 2500, data: '2024-12-03T09:00:00', status: 'PENDENTE', contaId: '1' },
 ];
 

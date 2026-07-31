@@ -63,15 +63,20 @@ function Extrato({ user }) {
     return format(new Date(dateString), 'dd/MM/yyyy', { locale: ptBR });
   };
 
-  const handleConsultar = () => {
-    const mockTransacoes = [
-      { id: 1, data: '2024-12-15', descricao: 'PIX recebido - João Silva', valor: 500.00, saldo: 15750.50 },
-      { id: 2, data: '2024-12-14', descricao: 'PIX enviado - Maria Santos', valor: -250.00, saldo: 15250.50 },
-      { id: 3, data: '2024-12-13', descricao: 'PIX recebido - Freelance', valor: 1200.00, saldo: 15500.50 },
-      { id: 4, data: '2024-12-12', descricao: 'Pagamento de boleto', valor: -850.00, saldo: 14300.50 },
-      { id: 5, data: '2024-12-11', descricao: 'Transferência recebida', valor: 3000.00, saldo: 15150.50 },
-    ];
-    setTransacoes(mockTransacoes);
+  const handleConsultar = async () => {
+    if (!contaSelecionada) return;
+    setLoading(true);
+    try {
+      const params = {};
+      if (dataInicial) params.dataInicial = dataInicial;
+      if (dataFinal) params.dataFinal = dataFinal;
+      const data = await apiService.getTransacoes(contaSelecionada, params);
+      setTransacoes(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error('Erro ao consultar extrato:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleDownloadPDF = () => {

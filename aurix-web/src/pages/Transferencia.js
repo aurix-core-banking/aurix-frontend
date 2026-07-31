@@ -22,6 +22,7 @@ import {
 } from '@mui/material';
 import { SwapHoriz } from '@mui/icons-material';
 import numeral from 'numeral';
+import { apiService } from '../services/apiService';
 
 function Transferencia({ user }) {
   const [activeStep, setActiveStep] = useState(0);
@@ -49,10 +50,19 @@ function Transferencia({ user }) {
     setConfirmOpen(true);
   };
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     setConfirmOpen(false);
-    setSuccess(true);
-    setActiveStep(2);
+    try {
+      if (tipo === 'PIX') {
+        await apiService.enviarPix({ chaveDestino: formData.chavePix, valor: parseFloat(formData.valor), descricao: `PIX via internet banking` });
+      } else {
+        await apiService.criarTransacao({ tipo, contaDestino: formData.conta, valor: parseFloat(formData.valor), descricao: `${tipo} via internet banking` });
+      }
+      setSuccess(true);
+      setActiveStep(2);
+    } catch (error) {
+      console.error('Erro na transferencia:', error);
+    }
   };
 
   const handleCloseConfirm = () => {

@@ -22,7 +22,8 @@ export const ContaCreate = (props) => (
         choices={[
           { id: 'CORRENTE', name: 'Corrente' },
           { id: 'POUPANCA', name: 'Poupança' },
-          { id: 'INVESTIMENTO', name: 'Investimento' },
+          { id: 'SALARIO', name: 'Salário' },
+          { id: 'EMPRESARIAL', name: 'Empresarial' },
         ]}
         validate={[required()]}
       />
@@ -46,6 +47,8 @@ export const ContaCreate = (props) => (
           { id: 'ATIVA', name: 'Ativa' },
           { id: 'INATIVA', name: 'Inativa' },
           { id: 'BLOQUEADA', name: 'Bloqueada' },
+          { id: 'SUSPENSA', name: 'Suspensa' },
+          { id: 'FECHADA', name: 'Fechada' },
         ]}
         defaultValue="ATIVA"
         validate={[required()]}

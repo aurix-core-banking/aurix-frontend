@@ -40,6 +40,8 @@ import {
 } from '@mui/icons-material';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 
+import { apiService } from '../services/apiService';
+
 const Dashboard = ({ user }) => {
   const [loading, setLoading] = useState(true);
   const [saldo, setSaldo] = useState(0);
@@ -49,45 +51,44 @@ const Dashboard = ({ user }) => {
   const [pixDialog, setPixDialog] = useState(false);
   const [pixData, setPixData] = useState({ chave: '', valor: '', descricao: '' });
 
-  // Mock data - em produção viria da API
   useEffect(() => {
     const loadData = async () => {
       setLoading(true);
-      
-      // Simular carregamento
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      setSaldo(user?.conta?.saldo || 15750.50);
-      setTransacoes([
-        { id: 1, tipo: 'PIX', descricao: 'PIX recebido - João Silva', valor: 500.00, data: '2024-01-15 14:30', status: 'concluida' },
-        { id: 2, tipo: 'TED', descricao: 'TED enviada - Conta poupança', valor: -1000.00, data: '2024-01-15 10:15', status: 'concluida' },
-        { id: 3, tipo: 'PIX', descricao: 'PIX enviado - Maria Santos', valor: -250.00, data: '2024-01-14 16:45', status: 'concluida' },
-        { id: 4, tipo: 'DOC', descricao: 'DOC enviado - Empresa XYZ', valor: -5000.00, data: '2024-01-14 09:20', status: 'processando' },
-        { id: 5, tipo: 'PIX', descricao: 'PIX recebido - Freelance', valor: 1200.00, data: '2024-01-13 18:30', status: 'concluida' }
-      ]);
-      
-      setInvestimentos([
-        { id: 1, nome: 'CDB 100% CDI', valor: 10000.00, rendimento: 125.30, percentual: 1.25, vencimento: '2024-07-15' },
-        { id: 2, nome: 'LCI 95% CDI', valor: 5000.00, rendimento: 45.20, percentual: 0.90, vencimento: '2024-12-20' },
-        { id: 3, nome: 'Fundo DI', valor: 2500.00, rendimento: 15.80, percentual: 0.63, vencimento: '2024-06-10' }
-      ]);
-      
-      setCartoes([
-        { id: 1, numero: '**** **** **** 1234', tipo: 'Crédito', limite: 5000.00, utilizado: 1250.00, vencimento: '2024-02-15' },
-        { id: 2, numero: '**** **** **** 5678', tipo: 'Débito', limite: 0, utilizado: 0, vencimento: '2026-12-31' }
-      ]);
-      
-      setLoading(false);
+      try {
+        const contas = await apiService.getContas();
+        const total = (contas || []).reduce((sum, c) => sum + (c.saldo || 0), 0);
+        setSaldo(total || user?.conta?.saldo || 0);
+
+        const trans = await apiService.getTransacoes(user?.contaId || 1, {});
+        setTransacoes((trans || []).slice(0, 5));
+
+        try {
+          const inv = await apiService.getInvestimentos(user?.contaId || 1);
+          setInvestimentos(inv || []);
+        } catch (e) { /* opcional */ }
+
+        try {
+          const cards = await apiService.getCartoes(user?.contaId || 1);
+          setCartoes(cards || []);
+        } catch (e) { /* opcional */ }
+      } catch (error) {
+        console.error('Erro ao carregar dashboard:', error);
+      } finally {
+        setLoading(false);
+      }
     };
-    
     loadData();
   }, [user]);
 
-  const handlePixSend = () => {
-    // Implementar envio de PIX
-    console.log('Enviando PIX:', pixData);
-    setPixDialog(false);
-    setPixData({ chave: '', valor: '', descricao: '' });
+  const handlePixSend = async () => {
+    try {
+      await apiService.enviarPix({ chaveDestino: pixData.chave, valor: parseFloat(pixData.valor), descricao: pixData.descricao });
+      setPixDialog(false);
+      setPixData({ chave: '', valor: '', descricao: '' });
+      window.location.reload();
+    } catch (error) {
+      console.error('Erro ao enviar PIX:', error);
+    }
   };
 
   const formatCurrency = (value) => {
