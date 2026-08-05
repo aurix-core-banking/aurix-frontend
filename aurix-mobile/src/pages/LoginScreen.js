@@ -23,11 +23,13 @@ import { biometricsService } from '../services/biometricsService';
 const { width, height } = Dimensions.get('window');
 
 const LoginScreen = ({ navigation, onLogin, biometricsEnabled }) => {
+  const [etapa, setEtapa] = useState('credenciais');
   const [formData, setFormData] = useState({
     cpf: '',
     senha: '',
-    token: '',
+    codigo: '',
   });
+  const [codigoToken, setCodigoToken] = useState(null);
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [fadeAnim] = useState(new Animated.Value(0));
@@ -72,27 +74,41 @@ const LoginScreen = ({ navigation, onLogin, biometricsEnabled }) => {
 
     setLoading(true);
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
-
-      // Mock user data
-      const userData = {
-        id: 1,
-        nome: 'João Silva',
-        email: 'joao.silva@aurix.com.br',
+      const resultado = await authService.login({
         cpf: formData.cpf,
-        telefone: '(11) 99999-9999',
-        conta: {
-          numero: '12345-6',
-          agencia: '0001',
-          saldo: 15750.50,
-          limite: 5000.00
-        }
-      };
+        senha: formData.senha,
+      });
 
-      onLogin(userData);
+      if (resultado?.mfaRequired) {
+        setCodigoToken(resultado.codigoToken);
+        await authService.gerarTokenMFA(formData.cpf);
+        setEtapa('mfa');
+        return;
+      }
+
+      onLogin(resultado.user);
     } catch (error) {
-      Alert.alert('Erro', 'CPF ou senha incorretos');
+      Alert.alert('Erro', error.message || 'CPF ou senha incorretos');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleValidarMFA = async () => {
+    if (!formData.codigo) {
+      Alert.alert('Erro', 'Informe o código recebido');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const resultado = await authService.validarTokenMFA(
+        codigoToken || formData.cpf,
+        formData.codigo
+      );
+      onLogin(resultado.user);
+    } catch (error) {
+      Alert.alert('Erro', error.message || 'Token inválido');
     } finally {
       setLoading(false);
     }
@@ -107,21 +123,8 @@ const LoginScreen = ({ navigation, onLogin, biometricsEnabled }) => {
     try {
       const success = await biometricsService.authenticate();
       if (success) {
-        // Mock user data for biometrics
-        const userData = {
-          id: 1,
-          nome: 'João Silva',
-          email: 'joao.silva@aurix.com.br',
-          cpf: '123.456.789-00',
-          telefone: '(11) 99999-9999',
-          conta: {
-            numero: '12345-6',
-            agencia: '0001',
-            saldo: 15750.50,
-            limite: 5000.00
-          }
-        };
-        onLogin(userData);
+        const resultado = await authService.biometricLogin();
+        onLogin(resultado.user);
       }
     } catch (error) {
       Alert.alert('Erro', 'Falha na autenticação biométrica');
@@ -155,73 +158,101 @@ const LoginScreen = ({ navigation, onLogin, biometricsEnabled }) => {
 
             {/* Login Form */}
             <View style={styles.formContainer}>
-              <View style={styles.inputContainer}>
-                <Icon name="account-circle" size={20} color={Colors.gray} style={styles.inputIcon} />
-                <TextInput
-                  style={styles.input}
-                  placeholder="CPF"
-                  placeholderTextColor={Colors.gray}
-                  value={formData.cpf}
-                  onChangeText={(value) => handleInputChange('cpf', value)}
-                  keyboardType="numeric"
-                  autoCapitalize="none"
-                />
-              </View>
+              {etapa === 'credenciais' ? (
+                <>
+                  <View style={styles.inputContainer}>
+                    <Icon name="account-circle" size={20} color={Colors.gray} style={styles.inputIcon} />
+                    <TextInput
+                      style={styles.input}
+                      placeholder="CPF"
+                      placeholderTextColor={Colors.gray}
+                      value={formData.cpf}
+                      onChangeText={(value) => handleInputChange('cpf', value)}
+                      keyboardType="numeric"
+                      autoCapitalize="none"
+                    />
+                  </View>
 
-              <View style={styles.inputContainer}>
-                <Icon name="lock" size={20} color={Colors.gray} style={styles.inputIcon} />
-                <TextInput
-                  style={[styles.input, { flex: 1 }]}
-                  placeholder="Senha"
-                  placeholderTextColor={Colors.gray}
-                  value={formData.senha}
-                  onChangeText={(value) => handleInputChange('senha', value)}
-                  secureTextEntry={!showPassword}
-                  autoCapitalize="none"
-                />
-                <TouchableOpacity
-                  onPress={() => setShowPassword(!showPassword)}
-                  style={styles.eyeIcon}
-                >
-                  <Icon
-                    name={showPassword ? 'visibility-off' : 'visibility'}
-                    size={20}
-                    color={Colors.gray}
-                  />
-                </TouchableOpacity>
-              </View>
+                  <View style={styles.inputContainer}>
+                    <Icon name="lock" size={20} color={Colors.gray} style={styles.inputIcon} />
+                    <TextInput
+                      style={[styles.input, { flex: 1 }]}
+                      placeholder="Senha"
+                      placeholderTextColor={Colors.gray}
+                      value={formData.senha}
+                      onChangeText={(value) => handleInputChange('senha', value)}
+                      secureTextEntry={!showPassword}
+                      autoCapitalize="none"
+                    />
+                    <TouchableOpacity
+                      onPress={() => setShowPassword(!showPassword)}
+                      style={styles.eyeIcon}
+                    >
+                      <Icon
+                        name={showPassword ? 'visibility-off' : 'visibility'}
+                        size={20}
+                        color={Colors.gray}
+                      />
+                    </TouchableOpacity>
+                  </View>
 
-              <View style={styles.inputContainer}>
-                <Icon name="security" size={20} color={Colors.gray} style={styles.inputIcon} />
-                <TextInput
-                  style={styles.input}
-                  placeholder="Token (opcional)"
-                  placeholderTextColor={Colors.gray}
-                  value={formData.token}
-                  onChangeText={(value) => handleInputChange('token', value)}
-                  keyboardType="numeric"
-                  autoCapitalize="none"
-                />
-              </View>
+                  <TouchableOpacity
+                    style={[styles.loginButton, loading && styles.loginButtonDisabled]}
+                    onPress={handleLogin}
+                    disabled={loading}
+                  >
+                    <Text style={styles.loginButtonText}>
+                      {loading ? 'Entrando...' : 'Entrar'}
+                    </Text>
+                  </TouchableOpacity>
 
-              <TouchableOpacity
-                style={[styles.loginButton, loading && styles.loginButtonDisabled]}
-                onPress={handleLogin}
-                disabled={loading}
-              >
-                <Text style={styles.loginButtonText}>
-                  {loading ? 'Entrando...' : 'Entrar'}
-                </Text>
-              </TouchableOpacity>
+                  {biometricsEnabled && (
+                    <TouchableOpacity
+                      style={styles.biometricsButton}
+                      onPress={handleBiometricsLogin}
+                    >
+                      <Icon name="fingerprint" size={24} color={Colors.primary} />
+                      <Text style={styles.biometricsButtonText}>Entrar com Biometria</Text>
+                    </TouchableOpacity>
+                  )}
+                </>
+              ) : (
+                <>
+                  <Text style={styles.mfaInfo}>
+                    Enviamos um código de segurança para seu e-mail/SMS cadastrado.
+                  </Text>
 
-              {biometricsEnabled && (
-                <TouchableOpacity
-                  style={styles.biometricsButton}
-                  onPress={handleBiometricsLogin}
-                >
-                  <Icon name="fingerprint" size={24} color={Colors.primary} />
-                  <Text style={styles.biometricsButtonText}>Entrar com Biometria</Text>
-                </TouchableOpacity>
+                  <View style={styles.inputContainer}>
+                    <Icon name="security" size={20} color={Colors.gray} style={styles.inputIcon} />
+                    <TextInput
+                      style={styles.input}
+                      placeholder="Código de segurança"
+                      placeholderTextColor={Colors.gray}
+                      value={formData.codigo}
+                      onChangeText={(value) => handleInputChange('codigo', value)}
+                      keyboardType="numeric"
+                      autoCapitalize="none"
+                    />
+                  </View>
+
+                  <TouchableOpacity
+                    style={[styles.loginButton, loading && styles.loginButtonDisabled]}
+                    onPress={handleValidarMFA}
+                    disabled={loading}
+                  >
+                    <Text style={styles.loginButtonText}>
+                      {loading ? 'Validando...' : 'Validar código'}
+                    </Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={styles.backButton}
+                    onPress={() => setEtapa('credenciais')}
+                    disabled={loading}
+                  >
+                    <Text style={styles.backButtonText}>Voltar</Text>
+                  </TouchableOpacity>
+                </>
               )}
 
               <View style={styles.linksContainer}>
@@ -230,20 +261,13 @@ const LoginScreen = ({ navigation, onLogin, biometricsEnabled }) => {
                 >
                   <Text style={styles.linkText}>Esqueci minha senha</Text>
                 </TouchableOpacity>
-                
+
                 <TouchableOpacity
                   onPress={() => navigation.navigate('Register')}
                 >
                   <Text style={styles.linkText}>Criar conta</Text>
                 </TouchableOpacity>
               </View>
-            </View>
-
-            {/* Test Data */}
-            <View style={styles.testDataContainer}>
-              <Text style={styles.testDataTitle}>Dados para teste:</Text>
-              <Text style={styles.testDataText}>CPF: 123.456.789-00</Text>
-              <Text style={styles.testDataText}>Senha: 123456</Text>
             </View>
           </Animated.View>
         </ScrollView>
@@ -370,6 +394,21 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginLeft: 8,
   },
+  mfaInfo: {
+    color: Colors.textSecondary,
+    fontSize: 14,
+    textAlign: 'center',
+    marginBottom: 15,
+  },
+  backButton: {
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  backButtonText: {
+    color: Colors.primary,
+    fontSize: 14,
+    fontWeight: '500',
+  },
   linksContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -379,23 +418,6 @@ const styles = StyleSheet.create({
     color: Colors.primary,
     fontSize: 14,
     fontWeight: '500',
-  },
-  testDataContainer: {
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-    borderRadius: 12,
-    padding: 15,
-    marginTop: 20,
-    alignItems: 'center',
-  },
-  testDataTitle: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: Colors.text,
-    marginBottom: 5,
-  },
-  testDataText: {
-    fontSize: 12,
-    color: Colors.textSecondary,
   },
 });
 

@@ -34,7 +34,15 @@ jest.mock('axios', () => {
         } else {
           args[configPos] = applyRequestInterceptors(args[configPos] || {});
         }
-        return applyResponseInterceptors(Reflect.apply(target, thisArg, args));
+        const config = args[configPos];
+        if (config.url === undefined) config.url = args[0];
+        const promise = Reflect.apply(target, thisArg, args);
+        return applyResponseInterceptors(
+          Promise.resolve(promise).catch((error) => {
+            if (error && !error.config) error.config = config;
+            throw error;
+          })
+        );
       },
     });
   }
@@ -44,26 +52,44 @@ jest.mock('axios', () => {
   const mockPut = jest.fn();
   const mockDelete = jest.fn();
 
-  const mockAxios = {
-    get: wrapMock(mockGet, 1),
-    post: wrapMock(mockPost, 2),
-    put: wrapMock(mockPut, 2),
-    delete: wrapMock(mockDelete, 1),
-    create: jest.fn(() => mockAxios),
-    interceptors: {
-      request: {
-        use: jest.fn((fn) => { requestInterceptors.push(fn); }),
-        eject: jest.fn(),
-      },
-      response: {
-        use: jest.fn((onFulfilled, onRejected) => {
-          if (onFulfilled) responseFulfilled.push(onFulfilled);
-          if (onRejected) responseRejected.push(onRejected);
-        }),
-        eject: jest.fn(),
-      },
+  const mockAxios = new Proxy(function mockAxios() {}, {
+    get(_, prop) {
+      if (prop === 'get') return wrapMock(mockGet, 1);
+      if (prop === 'post') return wrapMock(mockPost, 2);
+      if (prop === 'put') return wrapMock(mockPut, 2);
+      if (prop === 'delete') return wrapMock(mockDelete, 1);
+      if (prop === 'create') return jest.fn(() => mockAxios);
+      if (prop === 'interceptors') {
+        return {
+          request: {
+            use: jest.fn((fn) => { requestInterceptors.push(fn); }),
+            eject: jest.fn(),
+          },
+          response: {
+            use: jest.fn((onFulfilled, onRejected) => {
+              if (onFulfilled) responseFulfilled.push(onFulfilled);
+              if (onRejected) responseRejected.push(onRejected);
+            }),
+            eject: jest.fn(),
+          },
+        };
+      }
+      return undefined;
     },
-  };
+    apply(_target, _thisArg, args) {
+      const config = args[0] || {};
+      const method = (config.method || 'get').toLowerCase();
+      const callConfig = applyRequestInterceptors(config);
+      let promise;
+      if (method === 'get') promise = mockGet(callConfig.url, callConfig);
+      else if (method === 'post') promise = mockPost(callConfig.url, callConfig.data, callConfig);
+      else if (method === 'put') promise = mockPut(callConfig.url, callConfig.data, callConfig);
+      else if (method === 'delete') promise = mockDelete(callConfig.url, callConfig);
+      else promise = Promise.resolve({ data: {} });
+      return applyResponseInterceptors(promise);
+    },
+  });
+
   return mockAxios;
 });
 import axios from 'axios';
@@ -80,7 +106,7 @@ afterEach(() => {
 test('getContas envia GET para /contas com token', async () => {
   axios.get.mockResolvedValue({ data: [{ id: '1' }] });
   const result = await api.getContas();
-  expect(axios.get).toHaveBeenCalledWith('/contas', { headers: { Authorization: 'Bearer test-token' } });
+  expect(axios.get).toHaveBeenCalledWith('/contas', expect.objectContaining({ headers: { Authorization: 'Bearer test-token' } }));
   expect(result).toHaveLength(1);
 });
 
@@ -88,7 +114,7 @@ test('enviarPix envia POST para /pix/enviar', async () => {
   axios.post.mockResolvedValue({ data: { id: '1' } });
   const payload = { chave: 'test@test.com', valor: 100 };
   await api.enviarPix(payload);
-  expect(axios.post).toHaveBeenCalledWith('/pix/enviar', payload, { headers: { Authorization: 'Bearer test-token' } });
+  expect(axios.post).toHaveBeenCalledWith('/pix/enviar', payload, expect.objectContaining({ headers: { Authorization: 'Bearer test-token' } }));
 });
 
 test('receberPix envia POST para /pix/receber', async () => {
@@ -115,13 +141,28 @@ test('simularInvestimento envia POST para /investimentos/simular', async () => {
   expect(axios.post).toHaveBeenCalledWith('/investimentos/simular', { tipo: 'CDB', valorInvestido: 10000, taxaAnual: 13.5, dias: 360 }, expect.any(Object));
 });
 
-test('interceptor redireciona ao receber 401', async () => {
+test('interceptor redireciona ao receber 401 e falhar refresh', async () => {
   delete window.location;
   window.location = { href: '' };
   axios.get.mockRejectedValue({ response: { status: 401 } });
+  axios.post.mockRejectedValue({ response: { status: 401 } });
   await expect(api.getContas()).rejects.toMatchObject({ response: { status: 401 } });
   expect(localStorage.getItem('aurix_token')).toBeNull();
   expect(window.location.href).toBe('/login');
+});
+
+test('interceptor renova token e reexecuta request ao receber 401', async () => {
+  delete window.location;
+  window.location = { href: '' };
+  localStorage.setItem('aurix_refresh_token', 'refresh-token');
+  axios.get.mockRejectedValueOnce({ response: { status: 401 } })
+    .mockResolvedValueOnce({ data: [{ id: '1' }] });
+  axios.post.mockResolvedValue({ data: { token: 'new-token', refreshToken: 'new-refresh' } });
+  const result = await api.getContas();
+  expect(result).toHaveLength(1);
+  expect(axios.post).toHaveBeenCalledWith('/auth/refresh', {}, expect.any(Object));
+  expect(localStorage.getItem('aurix_token')).toBe('new-token');
+  expect(localStorage.getItem('aurix_refresh_token')).toBe('new-refresh');
 });
 
 describe('Onboarding API', () => {

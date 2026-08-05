@@ -4,6 +4,13 @@ import EncryptedStorage from 'react-native-encrypted-storage';
 
 const API_BASE_URL = 'http://localhost:8080/api';
 
+const obterMensagemErro = (error) => {
+  const status = error.response?.status;
+  if (status === 401) return 'CPF ou senha inválidos';
+  if (status === 423) return 'Conta bloqueada. Entre em contato com o suporte';
+  return error.response?.data?.message || error.message || 'Falha na autenticação';
+};
+
 class AuthService {
   constructor() {
     this.token = null;
@@ -17,9 +24,16 @@ class AuthService {
         senha: credentials.senha,
       });
 
-      const { token, user } = response.data;
+      const data = response.data;
+
+      if (data?.mfaRequired || data?.mfaObrigatorio) {
+        return { mfaRequired: true, codigoToken: data.codigoToken };
+      }
+
+      const { token, refreshToken, user } = data;
 
       await this.storeToken(token);
+      if (refreshToken) await this.storeRefreshToken(refreshToken);
       await this.storeUser(user);
 
       this.token = token;
@@ -27,10 +41,40 @@ class AuthService {
 
       return { token, user };
     } catch (error) {
-      if (error.response?.status === 401) {
-        throw new Error('CPF ou senha inválidos');
-      }
-      throw new Error('Falha na autenticação');
+      throw new Error(obterMensagemErro(error));
+    }
+  }
+
+  async validarTokenMFA(codigoToken, codigoInformado) {
+    try {
+      const response = await axios.post(`${API_BASE_URL}/mfa/validar-token`, {
+        codigoToken,
+        codigoInformado,
+      });
+
+      const { token, refreshToken, user } = response.data;
+
+      await this.storeToken(token);
+      if (refreshToken) await this.storeRefreshToken(refreshToken);
+      await this.storeUser(user);
+
+      this.token = token;
+      this.user = user;
+
+      return { token, user };
+    } catch (error) {
+      throw new Error(obterMensagemErro(error));
+    }
+  }
+
+  async gerarTokenMFA(cpf) {
+    try {
+      const response = await axios.post(`${API_BASE_URL}/mfa/gerar-token`, {
+        cpf: cpf?.replace(/\D/g, ''),
+      });
+      return response.data;
+    } catch (error) {
+      throw new Error(obterMensagemErro(error));
     }
   }
 
@@ -89,6 +133,10 @@ class AuthService {
     this.token = token;
   }
 
+  async storeRefreshToken(refreshToken) {
+    await EncryptedStorage.setItem('aurix_refresh_token', refreshToken);
+  }
+
   async storeUser(user) {
     await AsyncStorage.setItem('aurix_user', JSON.stringify(user));
     this.user = user;
@@ -105,9 +153,16 @@ class AuthService {
 
   async logout() {
     await EncryptedStorage.removeItem('aurix_token');
+    await EncryptedStorage.removeItem('aurix_refresh_token');
     await AsyncStorage.removeItem('aurix_user');
     this.token = null;
     this.user = null;
+  }
+
+  async clearStoredToken() {
+    await EncryptedStorage.removeItem('aurix_token');
+    await EncryptedStorage.removeItem('aurix_refresh_token');
+    this.token = null;
   }
 
   async isAuthenticated() {
@@ -128,6 +183,41 @@ class AuthService {
       throw new Error('Falha ao renovar token');
     }
   }
+
+  async forgotPassword(cpf) {
+    try {
+      const response = await axios.post(`${API_BASE_URL}/auth/forgot-password`, {
+        cpf: cpf?.replace(/\D/g, ''),
+      });
+      return response.data;
+    } catch (error) {
+      throw new Error(obterMensagemErro(error));
+    }
+  }
+
+  async resetPassword(cpf, codigo, novaSenha) {
+    try {
+      const response = await axios.post(`${API_BASE_URL}/auth/reset-password`, {
+        cpf: cpf?.replace(/\D/g, ''),
+        codigo,
+        novaSenha,
+      });
+      return response.data;
+    } catch (error) {
+      throw new Error(obterMensagemErro(error));
+    }
+  }
+
+  async register(userData) {
+    try {
+      const response = await axios.post(`${API_BASE_URL}/auth/register`, userData);
+      return response.data;
+    } catch (error) {
+      throw new Error(obterMensagemErro(error));
+    }
+  }
 }
 
-export default new AuthService();
+export const authService = new AuthService();
+
+export default authService;
