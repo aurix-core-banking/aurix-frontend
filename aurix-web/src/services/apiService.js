@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { instalarInterceptorRefresh } from './refreshTokenInterceptor';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080/api';
 
@@ -17,16 +18,7 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      localStorage.removeItem('aurix_token');
-      window.location.href = '/login';
-    }
-    return Promise.reject(error);
-  }
-);
+instalarInterceptorRefresh(api);
 
 export const apiService = {
   async get(url, config) {

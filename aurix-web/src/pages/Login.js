@@ -20,19 +20,30 @@ import {
   AccountCircle,
   Lock,
   Security,
-  Fingerprint
+  Fingerprint,
+  Send
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
+import { Link as RouterLink, useNavigate } from 'react-router-dom';
+import { authService } from '../services/authService';
+
+const obterMensagemErro = (error) => {
+  const status = error.response?.status;
+  if (status === 401) return 'CPF ou senha inválidos';
+  if (status === 423) return 'Conta bloqueada. Entre em contato com o suporte';
+  return error.response?.data?.message || error.message || 'Falha na autenticação';
+};
 
 const Login = ({ onLogin }) => {
+  const navigate = useNavigate();
+  const [etapa, setEtapa] = useState('credenciais');
   const [formData, setFormData] = useState({
     cpf: '',
     senha: '',
-    token: '',
-    biometria: false
+    codigo: '',
   });
+  const [codigoToken, setCodigoToken] = useState(null);
   const [showPassword, setShowPassword] = useState(false);
-  const [showToken, setShowToken] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -50,68 +61,67 @@ const Login = ({ onLogin }) => {
     setError('');
 
     try {
-      // Simular validação
       if (!formData.cpf || !formData.senha) {
         throw new Error('CPF e senha são obrigatórios');
       }
 
-      // Simular chamada para API
-      await new Promise(resolve => setTimeout(resolve, 2000));
-
-      // Mock user data
-      const userData = {
-        id: 1,
-        nome: 'João Silva',
-        email: 'joao.silva@aurix.com.br',
+      const resultado = await onLogin({
         cpf: formData.cpf,
-        telefone: '(11) 99999-9999',
-        endereco: {
-          rua: 'Rua das Flores, 123',
-          cidade: 'São Paulo',
-          estado: 'SP',
-          cep: '01234-567'
-        },
-        conta: {
-          numero: '12345-6',
-          agencia: '0001',
-          saldo: 15750.50,
-          limite: 5000.00
-        }
-      };
+        senha: formData.senha,
+      });
 
-      onLogin(userData);
+      if (resultado?.mfaRequired || resultado?.mfaObrigatorio) {
+        setCodigoToken(resultado.codigoToken);
+        await authService.gerarTokenMFA(formData.cpf);
+        setEtapa('mfa');
+        setError('');
+      }
     } catch (err) {
-      setError(err.message);
+      setError(obterMensagemErro(err));
     } finally {
       setLoading(false);
     }
   };
 
-  const handleBiometria = () => {
-    setFormData({ ...formData, biometria: true });
-    // Simular biometria
-    setTimeout(() => {
-      const userData = {
-        id: 1,
-        nome: 'João Silva',
-        email: 'joao.silva@aurix.com.br',
-        cpf: '123.456.789-00',
-        telefone: '(11) 99999-9999',
-        endereco: {
-          rua: 'Rua das Flores, 123',
-          cidade: 'São Paulo',
-          estado: 'SP',
-          cep: '01234-567'
-        },
-        conta: {
-          numero: '12345-6',
-          agencia: '0001',
-          saldo: 15750.50,
-          limite: 5000.00
-        }
-      };
-      onLogin(userData);
-    }, 1500);
+  const handleValidarMFA = async (event) => {
+    event.preventDefault();
+    setLoading(true);
+    setError('');
+
+    try {
+      if (!formData.codigo) {
+        throw new Error('Informe o código recebido por e-mail ou SMS');
+      }
+
+      const resultado = await authService.validarMFA(codigoToken || formData.cpf, formData.codigo);
+      if (resultado?.token && resultado?.user) {
+        await onLogin({ token: resultado.token, user: resultado.user });
+      } else {
+        setError('Token inválido. Tente novamente.');
+      }
+    } catch (err) {
+      setError(obterMensagemErro(err));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleBiometria = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      if (!formData.cpf) {
+        throw new Error('Informe o CPF antes de usar a biometria');
+      }
+      const resultado = await authService.gerarTokenMFA(formData.cpf);
+      setCodigoToken(resultado?.codigoToken);
+      setEtapa('mfa');
+      setError('');
+    } catch (err) {
+      setError(obterMensagemErro(err));
+    } finally {
+      setLoading(false);
+    }
   };
 
   const formatCPF = (value) => {
@@ -170,121 +180,149 @@ const Login = ({ onLogin }) => {
                 </Alert>
               )}
 
-              <form onSubmit={handleSubmit}>
-                <TextField
-                  fullWidth
-                  label="CPF"
-                  value={formData.cpf}
-                  onChange={(e) => setFormData({ ...formData, cpf: formatCPF(e.target.value) })}
-                  margin="normal"
-                  required
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <AccountCircle color="action" />
-                      </InputAdornment>
-                    ),
-                  }}
-                  placeholder="000.000.000-00"
-                />
+              {etapa === 'credenciais' ? (
+                <form onSubmit={handleSubmit}>
+                  <TextField
+                    fullWidth
+                    label="CPF"
+                    value={formData.cpf}
+                    onChange={(e) => setFormData({ ...formData, cpf: formatCPF(e.target.value) })}
+                    margin="normal"
+                    required
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <AccountCircle color="action" />
+                        </InputAdornment>
+                      ),
+                    }}
+                    placeholder="000.000.000-00"
+                  />
 
-                <TextField
-                  fullWidth
-                  label="Senha"
-                  type={showPassword ? 'text' : 'password'}
-                  value={formData.senha}
-                  onChange={handleChange('senha')}
-                  margin="normal"
-                  required
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <Lock color="action" />
-                      </InputAdornment>
-                    ),
-                    endAdornment: (
-                      <InputAdornment position="end">
-                        <IconButton
-                          onClick={() => setShowPassword(!showPassword)}
-                          edge="end"
-                        >
-                          {showPassword ? <VisibilityOff /> : <Visibility />}
-                        </IconButton>
-                      </InputAdornment>
-                    ),
-                  }}
-                />
+                  <TextField
+                    fullWidth
+                    label="Senha"
+                    type={showPassword ? 'text' : 'password'}
+                    value={formData.senha}
+                    onChange={handleChange('senha')}
+                    margin="normal"
+                    required
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <Lock color="action" />
+                        </InputAdornment>
+                      ),
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <IconButton
+                            onClick={() => setShowPassword(!showPassword)}
+                            edge="end"
+                          >
+                            {showPassword ? <VisibilityOff /> : <Visibility />}
+                          </IconButton>
+                        </InputAdornment>
+                      ),
+                    }}
+                  />
 
-                <TextField
-                  fullWidth
-                  label="Token (opcional)"
-                  type={showToken ? 'text' : 'password'}
-                  value={formData.token}
-                  onChange={handleChange('token')}
-                  margin="normal"
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <Security color="action" />
-                      </InputAdornment>
-                    ),
-                    endAdornment: (
-                      <InputAdornment position="end">
-                        <IconButton
-                          onClick={() => setShowToken(!showToken)}
-                          edge="end"
-                        >
-                          {showToken ? <VisibilityOff /> : <Visibility />}
-                        </IconButton>
-                      </InputAdornment>
-                    ),
-                  }}
-                />
+                  <Button
+                    type="submit"
+                    fullWidth
+                    variant="contained"
+                    size="large"
+                    disabled={loading}
+                    sx={{
+                      mt: 3,
+                      mb: 2,
+                      py: 1.5,
+                      fontSize: '1.1rem',
+                      fontWeight: 600
+                    }}
+                  >
+                    {loading ? 'Entrando...' : 'Entrar'}
+                  </Button>
 
-                <Button
-                  type="submit"
-                  fullWidth
-                  variant="contained"
-                  size="large"
-                  disabled={loading}
-                  sx={{
-                    mt: 3,
-                    mb: 2,
-                    py: 1.5,
-                    fontSize: '1.1rem',
-                    fontWeight: 600
-                  }}
-                >
-                  {loading ? 'Entrando...' : 'Entrar'}
-                </Button>
+                  <Divider sx={{ my: 2 }}>
+                    <Typography variant="body2" color="text.secondary">
+                      ou
+                    </Typography>
+                  </Divider>
 
-                <Divider sx={{ my: 2 }}>
-                  <Typography variant="body2" color="text.secondary">
-                    ou
-                  </Typography>
-                </Divider>
+                  <Button
+                    fullWidth
+                    variant="outlined"
+                    size="large"
+                    startIcon={<Fingerprint />}
+                    onClick={handleBiometria}
+                    disabled={loading}
+                    sx={{
+                      py: 1.5,
+                      fontSize: '1.1rem',
+                      fontWeight: 600
+                    }}
+                  >
+                    Entrar com Biometria
+                  </Button>
+                </form>
+              ) : (
+                <form onSubmit={handleValidarMFA}>
+                  <Alert severity="info" sx={{ mb: 3 }}>
+                    Enviamos um código de segurança para seu e-mail/SMS cadastrado.
+                  </Alert>
 
-                <Button
-                  fullWidth
-                  variant="outlined"
-                  size="large"
-                  startIcon={<Fingerprint />}
-                  onClick={handleBiometria}
-                  sx={{
-                    py: 1.5,
-                    fontSize: '1.1rem',
-                    fontWeight: 600
-                  }}
-                >
-                  Entrar com Biometria
-                </Button>
-              </form>
+                  <TextField
+                    fullWidth
+                    label="Código de segurança"
+                    value={formData.codigo}
+                    onChange={handleChange('codigo')}
+                    margin="normal"
+                    required
+                    inputProps={{ inputMode: 'numeric' }}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <Security color="action" />
+                        </InputAdornment>
+                      ),
+                    }}
+                    placeholder="000000"
+                  />
+
+                  <Button
+                    type="submit"
+                    fullWidth
+                    variant="contained"
+                    size="large"
+                    disabled={loading}
+                    startIcon={<Send />}
+                    sx={{
+                      mt: 3,
+                      mb: 2,
+                      py: 1.5,
+                      fontSize: '1.1rem',
+                      fontWeight: 600
+                    }}
+                  >
+                    {loading ? 'Validando...' : 'Validar código'}
+                  </Button>
+
+                  <Button
+                    fullWidth
+                    variant="text"
+                    onClick={() => setEtapa('credenciais')}
+                    disabled={loading}
+                  >
+                    Voltar
+                  </Button>
+                </form>
+              )}
 
               <Box sx={{ mt: 3, textAlign: 'center' }}>
-                <Link href="#" variant="body2" sx={{ mr: 2 }}>
+                <Link component={RouterLink} to="/esqueci-senha" variant="body2" sx={{ mr: 2 }}>
                   Esqueci minha senha
                 </Link>
-                <Link href="#" variant="body2">
+                <Link component={RouterLink} to="/primeiro-acesso" variant="body2">
                   Primeiro acesso
                 </Link>
               </Box>
@@ -299,9 +337,7 @@ const Login = ({ onLogin }) => {
                 }}
               >
                 <Typography variant="body2" color="text.secondary" align="center">
-                  <strong>Dados para teste:</strong><br />
-                  CPF: 123.456.789-00<br />
-                  Senha: 123456
+                  Ambiente seguro com autenticação de múltiplos fatores (MFA).
                 </Typography>
               </Paper>
             </CardContent>

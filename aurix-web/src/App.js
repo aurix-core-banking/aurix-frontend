@@ -22,6 +22,8 @@ import Perfil from './pages/Perfil';
 import Configuracoes from './pages/Configuracoes';
 import Onboarding from './pages/Onboarding';
 import Credito from './pages/Credito';
+import EsqueciSenha from './pages/EsqueciSenha';
+import PrimeiroAcesso from './pages/PrimeiroAcesso';
 
 // Services
 import { authService } from './services/authService';
@@ -54,17 +56,32 @@ function App() {
 
   const handleLogin = async (credentials) => {
     try {
+      if (credentials?.token && credentials?.user) {
+        localStorage.setItem('aurix_token', credentials.token);
+        setUser(credentials.user);
+        setIsAuthenticated(true);
+        showNotification('Login realizado com sucesso!', 'success');
+        return { success: true };
+      }
+
       const response = await authService.login({
         cpf: credentials.cpf?.replace(/\D/g, ''),
         senha: credentials.senha,
-        token: credentials.token,
       });
+
+      if (response?.mfaRequired || response?.mfaObrigatorio) {
+        return { mfaRequired: true, codigoToken: response.codigoToken };
+      }
+
       localStorage.setItem('aurix_token', response.token);
       setUser(response.user);
       setIsAuthenticated(true);
       showNotification('Login realizado com sucesso!', 'success');
+      return { success: true };
     } catch (error) {
-      showNotification('Erro no login: ' + (error.message || 'Credenciais inválidas'), 'error');
+      const mensagem = error.response?.data?.message || error.message || 'Credenciais inválidas';
+      showNotification('Erro no login: ' + mensagem, 'error');
+      return { error: mensagem };
     }
   };
 
@@ -95,7 +112,11 @@ function App() {
     return (
       <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ptBR}>
         <CssBaseline />
-        <Login onLogin={handleLogin} />
+        <Routes>
+          <Route path="/esqueci-senha" element={<EsqueciSenha />} />
+          <Route path="/primeiro-acesso" element={<PrimeiroAcesso />} />
+          <Route path="*" element={<Login onLogin={handleLogin} />} />
+        </Routes>
         <Snackbar
           open={notification.open}
           autoHideDuration={6000}
