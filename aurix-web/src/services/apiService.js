@@ -37,29 +37,29 @@ export const apiService = {
   },
 
   async getContas() {
-    const response = await api.get('/contas');
+    const response = await api.get('/core/contas');
     return response.data;
   },
 
   async getConta(id) {
-    const response = await api.get(`/contas/${id}`);
+    const response = await api.get(`/core/contas/${id}`);
     return response.data;
   },
 
   async getTransacoes(contaId, params = {}) {
-    const response = await api.get(`/transacoes`, {
+    const response = await api.get(`/core/transacoes`, {
       params: { contaId, ...params },
     });
     return response.data;
   },
 
   async criarTransacao(transacao) {
-    const response = await api.post('/transacoes', transacao);
+    const response = await api.post('/core/transacoes', transacao);
     return response.data;
   },
 
   async enviarPix(pixData) {
-    const response = await api.post('/pix/enviar', pixData);
+    const response = await api.post('/pix/transferencias', pixData);
     return response.data;
   },
 
@@ -69,17 +69,17 @@ export const apiService = {
   },
 
   async getInvestimentos(contaId) {
-    const response = await api.get('/investimentos/conta/' + contaId);
+    const response = await api.get('/poupanca/contas/' + contaId);
     return response.data;
   },
 
   async criarInvestimento(investimento) {
-    const response = await api.post('/investimentos', investimento);
+    const response = await api.post('/poupanca/contas', investimento);
     return response.data;
   },
 
   async simularInvestimento(tipo, valor, taxa, dias) {
-    const response = await api.post('/investimentos/simular', {
+    const response = await api.post('/poupanca/simular', {
       tipo,
       valorInvestido: valor,
       taxaAnual: taxa,
@@ -89,22 +89,22 @@ export const apiService = {
   },
 
   async getCartoes(contaId) {
-    const response = await api.get(`/cartoes/conta/${contaId}`);
+    const response = await api.get(`/cards/consulta/${contaId}`);
     return response.data;
   },
 
   async emitirCartao(cartaoData) {
-    const response = await api.post('/cartoes/emitir', cartaoData);
+    const response = await api.post('/cards/emissao', cartaoData);
     return response.data;
   },
 
   async getFaturas(cartaoId) {
-    const response = await api.get(`/cartoes/${cartaoId}/faturas`);
+    const response = await api.get(`/cards/faturas/${cartaoId}`);
     return response.data;
   },
 
   async pagarFatura(faturaId, valor) {
-    const response = await api.post(`/cartoes/fatura/${faturaId}/pagar`, {
+    const response = await api.post(`/cards/faturas/${faturaId}/pagar`, {
       valorPagamento: valor,
     });
     return response.data;

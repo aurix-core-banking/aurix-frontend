@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Box, Card, CardContent, Typography, TextField, Button } from '@mui/material';
+import { apiService } from '../services/apiService';
 
 function Credito({ user }) {
   const [valor, setValor] = useState('');
@@ -11,12 +12,12 @@ function Credito({ user }) {
     setLoading(true);
     setMessage(null);
     try {
-      const base = process.env.REACT_APP_API_URL || 'http://localhost:8080';
-      const res = await fetch(`${base}/api/credit/simulador?valor=${encodeURIComponent(valor)}`);
-      const data = await res.json().catch(() => ({}));
-      setMessage(res.ok ? 'Simulacao: ' + JSON.stringify(data) : (data.message || 'Erro ao simular'));
+      const data = await apiService.get('/emprestimos/simulador', {
+        params: { valor: encodeURIComponent(valor) },
+      });
+      setMessage('Simulacao: ' + JSON.stringify(data));
     } catch (err) {
-      setMessage('Erro: ' + (err.message || 'tente novamente'));
+      setMessage('Erro: ' + (err?.response?.data?.message || err.message || 'tente novamente'));
     } finally {
       setLoading(false);
     }
