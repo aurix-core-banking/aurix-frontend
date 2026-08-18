@@ -21,4 +21,4 @@ npm run dev
 
 - [aurix-core-banking](https://github.com/aureus-platform/aurix-core-banking) — monorepo
 - [aurix-backend](https://github.com/aureus-platform/aurix-backend)
-- [aurix-api-specs](https://github.com/aureus-platform/aurix-api-specs)
+
