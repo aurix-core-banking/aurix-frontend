@@ -30,9 +30,9 @@ export const RESOURCE_PATH = {
   transacoes: { base: BASE.core, path: 'transacoes' },
   investimentos: { base: BASE.core, path: 'investimentos' },
   pix: { base: BASE.pix, path: 'transacoes' },
-  compliance: { base: BASE.compliance, path: 'compliance' },
+  compliance: { base: BASE.compliance, path: 'registro' },
   auditoria: { base: BASE.audit, path: 'auditoria' },
-  analytics: { base: BASE.analytics, path: 'analytics' },
+  analytics: { base: BASE.analytics, path: 'relatorios' },
   instituicoes: { base: BASE.provisioning, path: 'instituicoes' },
   planos: { base: BASE.billing, path: 'planos' },
   solicitacoes_conta: { base: BASE.onboarding_pf, path: 'solicitacoes' },
@@ -41,12 +41,12 @@ export const RESOURCE_PATH = {
   solicitacoes_credito: { base: BASE.credit, path: 'solicitacoes' },
   parceiros: { base: BASE.baas, path: 'parceiros' },
   subcontas: { base: BASE.baas, path: 'custodia/subcontas' },
-  relatorios_bacen: { base: BASE.bacen, path: 'bacen/relatorios' },
+  relatorios_bacen: { base: BASE.bacen, path: 'relatorios' },
   tarifas: { base: BASE.pricing, path: 'tarifas' },
   cartoes: { base: BASE.cartoes, path: 'cartoes' },
   lancamentos: { base: BASE.accounting, path: 'lancamentos' },
-  empresas: { base: BASE.organization, path: 'api/empresas' },
-  funcionarios: { base: BASE.organization, path: 'api/funcionarios' },
+  empresas: { base: '/api/banking', path: 'empresas' },
+  funcionarios: { base: '/api/banking', path: 'funcionarios' },
 };
 
 export const getResourceUrl = (resource, id = null) => {

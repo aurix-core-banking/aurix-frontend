@@ -141,7 +141,7 @@ function Pagamento({ user }) {
                   </Grid>
                 </Grid>
                 <Box mt={3}>
-                  <Button variant="contained" onClick={handlePagar}>
+                  <Button variant="contained" onClick={handleConfirm}>
                     Pagar
                   </Button>
                 </Box>
