@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   Grid,
   Card,
@@ -20,72 +20,88 @@ import {
   TextField,
   Alert,
   Skeleton,
-  Divider
+  Divider,
 } from '@mui/material';
 import {
-  AccountBalance,
   TrendingUp,
-  TrendingDown,
-  CreditCard,
   Payment,
-  Security,
-  Notifications,
   Refresh,
   Add,
-  ArrowUpward,
-  ArrowDownward,
   Pix,
   SwapHoriz,
-  Description
+  Description,
+  ErrorOutline,
 } from '@mui/icons-material';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { useQuery } from 'react-query';
 
 import { apiService } from '../services/apiService';
 
+const fetchContas = async () => {
+  const data = await apiService.getContas();
+  return Array.isArray(data) ? data : [];
+};
+
+const fetchTransacoes = async (contaId) => {
+  if (!contaId) return [];
+  const data = await apiService.getTransacoes(contaId, {});
+  return Array.isArray(data) ? data : [];
+};
+
+const fetchInvestimentos = async (contaId) => {
+  if (!contaId) return [];
+  const data = await apiService.getInvestimentos(contaId);
+  return Array.isArray(data) ? data : [];
+};
+
+const fetchCartoes = async (contaId) => {
+  if (!contaId) return [];
+  const data = await apiService.getCartoes(contaId);
+  return Array.isArray(data) ? data : [];
+};
+
 const Dashboard = ({ user }) => {
-  const [loading, setLoading] = useState(true);
-  const [saldo, setSaldo] = useState(0);
-  const [transacoes, setTransacoes] = useState([]);
-  const [investimentos, setInvestimentos] = useState([]);
-  const [cartoes, setCartoes] = useState([]);
   const [pixDialog, setPixDialog] = useState(false);
   const [pixData, setPixData] = useState({ chave: '', valor: '', descricao: '' });
 
-  useEffect(() => {
-    const loadData = async () => {
-      setLoading(true);
-      try {
-        const contas = await apiService.getContas();
-        const total = (contas || []).reduce((sum, c) => sum + (c.saldo || 0), 0);
-        setSaldo(total || user?.conta?.saldo || 0);
+  const contaId = user?.contaId || user?.conta?.id || '1';
 
-        const trans = await apiService.getTransacoes(user?.contaId || 1, {});
-        setTransacoes((trans || []).slice(0, 5));
+  const { data: contas = [], isLoading: carregandoContas } = useQuery(
+    'contas',
+    fetchContas,
+    { retry: 1, staleTime: 30000 }
+  );
 
-        try {
-          const inv = await apiService.getInvestimentos(user?.contaId || 1);
-          setInvestimentos(inv || []);
-        } catch (e) { /* opcional */ }
+  const { data: transacoes = [], isLoading: carregandoTransacoes } = useQuery(
+    ['transacoes', contaId],
+    () => fetchTransacoes(contaId),
+    { retry: 1, staleTime: 15000, enabled: !!contaId }
+  );
 
-        try {
-          const cards = await apiService.getCartoes(user?.contaId || 1);
-          setCartoes(cards || []);
-        } catch (e) { /* opcional */ }
-      } catch (error) {
-        console.error('Erro ao carregar dashboard:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    loadData();
-  }, [user]);
+  const { data: investimentos = [], isLoading: carregandoInvestimentos } = useQuery(
+    ['investimentos', contaId],
+    () => fetchInvestimentos(contaId),
+    { retry: 1, staleTime: 30000, enabled: !!contaId }
+  );
+
+  const { data: cartoes = [], isLoading: carregandoCartoes } = useQuery(
+    ['cartoes', contaId],
+    () => fetchCartoes(contaId),
+    { retry: 1, staleTime: 30000, enabled: !!contaId }
+  );
+
+  const saldo = contas.reduce((sum, c) => sum + (c.saldo || 0), 0);
+  const transacoesRecentes = transacoes.slice(0, 5);
 
   const handlePixSend = async () => {
     try {
-      await apiService.enviarPix({ chaveDestino: pixData.chave, valor: parseFloat(pixData.valor), descricao: pixData.descricao });
+      await apiService.enviarPix({
+        chaveDestino: pixData.chave,
+        valor: parseFloat(pixData.valor),
+        descricao: pixData.descricao,
+      });
       setPixDialog(false);
       setPixData({ chave: '', valor: '', descricao: '' });
-      window.location.reload();
     } catch (error) {
       console.error('Erro ao enviar PIX:', error);
     }
@@ -94,7 +110,7 @@ const Dashboard = ({ user }) => {
   const formatCurrency = (value) => {
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
-      currency: 'BRL'
+      currency: 'BRL',
     }).format(value);
   };
 
@@ -104,7 +120,7 @@ const Dashboard = ({ user }) => {
       month: '2-digit',
       year: 'numeric',
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
     });
   };
 
@@ -135,22 +151,9 @@ const Dashboard = ({ user }) => {
     }
   };
 
-  // Dados para gráficos
-  const saldoHistory = [
-    { mes: 'Jan', saldo: 12000 },
-    { mes: 'Fev', saldo: 13500 },
-    { mes: 'Mar', saldo: 14200 },
-    { mes: 'Abr', saldo: 15100 },
-    { mes: 'Mai', saldo: 15750 }
-  ];
+  const carregando = carregandoContas || carregandoTransacoes;
 
-  const investimentosData = [
-    { name: 'CDB', value: 10000, color: '#8884d8' },
-    { name: 'LCI', value: 5000, color: '#82ca9d' },
-    { name: 'Fundo DI', value: 2500, color: '#ffc658' }
-  ];
-
-  if (loading) {
+  if (carregando) {
     return (
       <Box sx={{ p: 3 }}>
         <Grid container spacing={3}>
@@ -179,13 +182,12 @@ const Dashboard = ({ user }) => {
   return (
     <Box sx={{ p: 3 }}>
       <Grid container spacing={3}>
-        {/* Saldo Principal */}
         <Grid item xs={12} md={8}>
           <Card sx={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', color: 'white' }}>
             <CardContent>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                 <Typography variant="h6">Saldo Disponível</Typography>
-                <IconButton color="inherit" onClick={() => window.location.reload()}>
+                <IconButton color="inherit">
                   <Refresh />
                 </IconButton>
               </Box>
@@ -220,7 +222,6 @@ const Dashboard = ({ user }) => {
           </Card>
         </Grid>
 
-        {/* Resumo Financeiro */}
         <Grid item xs={12} md={4}>
           <Card>
             <CardContent>
@@ -229,26 +230,26 @@ const Dashboard = ({ user }) => {
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
                   <Typography variant="body2">Receitas (mês)</Typography>
                   <Typography variant="body2" color="success.main">
-                    {formatCurrency(1700.00)}
+                    {formatCurrency(transacoesRecentes.filter(t => t.valor > 0).reduce((s, t) => s + t.valor, 0) || 0)}
                   </Typography>
                 </Box>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
                   <Typography variant="body2">Despesas (mês)</Typography>
                   <Typography variant="body2" color="error.main">
-                    {formatCurrency(1250.00)}
+                    {formatCurrency(Math.abs(transacoesRecentes.filter(t => t.valor < 0).reduce((s, t) => s + t.valor, 0) || 0))}
                   </Typography>
                 </Box>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
                   <Typography variant="body2">Investimentos</Typography>
                   <Typography variant="body2" color="info.main">
-                    {formatCurrency(17500.00)}
+                    {formatCurrency(investimentos.reduce((s, i) => s + (i.valor || i.valorInvestido || 0), 0))}
                   </Typography>
                 </Box>
                 <Divider sx={{ my: 1 }} />
                 <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                   <Typography variant="body2" sx={{ fontWeight: 'bold' }}>Saldo Líquido</Typography>
                   <Typography variant="body2" color="success.main" sx={{ fontWeight: 'bold' }}>
-                    {formatCurrency(450.00)}
+                    {formatCurrency(saldo)}
                   </Typography>
                 </Box>
               </Box>
@@ -256,140 +257,114 @@ const Dashboard = ({ user }) => {
           </Card>
         </Grid>
 
-        {/* Gráfico de Saldo */}
         <Grid item xs={12} md={8}>
           <Card>
             <CardContent>
-              <Typography variant="h6" gutterBottom>Evolução do Saldo</Typography>
-              <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={saldoHistory}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="mes" />
-                  <YAxis />
-                  <Tooltip formatter={(value) => formatCurrency(value)} />
-                  <Line type="monotone" dataKey="saldo" stroke="#8884d8" strokeWidth={2} />
-                </LineChart>
-              </ResponsiveContainer>
+              <Typography variant="h6" gutterBottom>Transações Recentes</Typography>
+              {transacoesRecentes.length === 0 ? (
+                <Box sx={{ textAlign: 'center', py: 4 }}>
+                  <Payment sx={{ fontSize: 48, color: 'text.secondary', mb: 1 }} />
+                  <Typography color="text.secondary">Nenhuma transação encontrada</Typography>
+                </Box>
+              ) : (
+                <List>
+                  {transacoesRecentes.map((transacao) => (
+                    <ListItem key={transacao.id} sx={{ px: 0 }}>
+                      <ListItemIcon>
+                        {getTipoIcon(transacao.tipo)}
+                      </ListItemIcon>
+                      <ListItemText
+                        primary={transacao.descricao}
+                        secondary={formatDate(transacao.data)}
+                      />
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Typography
+                          variant="body2"
+                          color={transacao.valor > 0 ? 'success.main' : 'error.main'}
+                          sx={{ fontWeight: 'bold' }}
+                        >
+                          {transacao.valor > 0 ? '+' : ''}{formatCurrency(transacao.valor)}
+                        </Typography>
+                        <Chip
+                          label={getStatusLabel(transacao.status)}
+                          color={getStatusColor(transacao.status)}
+                          size="small"
+                        />
+                      </Box>
+                    </ListItem>
+                  ))}
+                </List>
+              )}
             </CardContent>
           </Card>
         </Grid>
 
-        {/* Investimentos */}
         <Grid item xs={12} md={4}>
           <Card>
             <CardContent>
               <Typography variant="h6" gutterBottom>Investimentos</Typography>
-              <ResponsiveContainer width="100%" height={200}>
-                <PieChart>
-                  <Pie
-                    data={investimentosData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={40}
-                    outerRadius={80}
-                    dataKey="value"
-                  >
-                    {investimentosData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip formatter={(value) => formatCurrency(value)} />
-                </PieChart>
-              </ResponsiveContainer>
-              <List dense>
-                {investimentos.map((investimento) => (
-                  <ListItem key={investimento.id} sx={{ px: 0 }}>
-                    <ListItemText
-                      primary={investimento.nome}
-                      secondary={`${formatCurrency(investimento.valor)} • ${investimento.percentual}%`}
-                    />
-                    <Typography variant="body2" color="success.main">
-                      +{formatCurrency(investimento.rendimento)}
-                    </Typography>
-                  </ListItem>
-                ))}
-              </List>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        {/* Transações Recentes */}
-        <Grid item xs={12} md={8}>
-          <Card>
-            <CardContent>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                <Typography variant="h6">Transações Recentes</Typography>
-                <Button size="small" startIcon={<Add />}>
-                  Ver Todas
-                </Button>
-              </Box>
-              <List>
-                {transacoes.map((transacao) => (
-                  <ListItem key={transacao.id} sx={{ px: 0 }}>
-                    <ListItemIcon>
-                      {getTipoIcon(transacao.tipo)}
-                    </ListItemIcon>
-                    <ListItemText
-                      primary={transacao.descricao}
-                      secondary={formatDate(transacao.data)}
-                    />
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <Typography
-                        variant="body2"
-                        color={transacao.valor > 0 ? 'success.main' : 'error.main'}
-                        sx={{ fontWeight: 'bold' }}
-                      >
-                        {transacao.valor > 0 ? '+' : ''}{formatCurrency(transacao.valor)}
-                      </Typography>
-                      <Chip
-                        label={getStatusLabel(transacao.status)}
-                        color={getStatusColor(transacao.status)}
-                        size="small"
+              {investimentos.length === 0 ? (
+                <Box sx={{ textAlign: 'center', py: 4 }}>
+                  <TrendingUp sx={{ fontSize: 48, color: 'text.secondary', mb: 1 }} />
+                  <Typography color="text.secondary">Nenhum investimento</Typography>
+                </Box>
+              ) : (
+                <List dense>
+                  {investimentos.map((investimento) => (
+                    <ListItem key={investimento.id} sx={{ px: 0 }}>
+                      <ListItemText
+                        primary={investimento.nome || investimento.tipo}
+                        secondary={`${formatCurrency(investimento.valor || investimento.valorInvestido)} • ${investimento.percentual || investimento.taxa}%`}
                       />
-                    </Box>
-                  </ListItem>
-                ))}
-              </List>
+                      <Typography variant="body2" color="success.main">
+                        +{formatCurrency(investimento.rendimento || 0)}
+                      </Typography>
+                    </ListItem>
+                  ))}
+                </List>
+              )}
             </CardContent>
           </Card>
         </Grid>
 
-        {/* Cartões */}
         <Grid item xs={12} md={4}>
           <Card>
             <CardContent>
               <Typography variant="h6" gutterBottom>Cartões</Typography>
-              {cartoes.map((cartao) => (
-                <Box key={cartao.id} sx={{ mb: 2, p: 2, border: 1, borderColor: 'divider', borderRadius: 2 }}>
-                  <Typography variant="subtitle2" gutterBottom>
-                    {cartao.tipo} • {cartao.numero}
-                  </Typography>
-                  {cartao.tipo === 'Crédito' && (
-                    <Box sx={{ mt: 1 }}>
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                        <Typography variant="body2">Utilizado</Typography>
-                        <Typography variant="body2">
-                          {formatCurrency(cartao.utilizado)} / {formatCurrency(cartao.limite)}
-                        </Typography>
-                      </Box>
-                      <LinearProgress
-                        variant="determinate"
-                        value={(cartao.utilizado / cartao.limite) * 100}
-                        sx={{ height: 8, borderRadius: 4 }}
-                      />
-                      <Typography variant="caption" color="text.secondary">
-                        Vence em {new Date(cartao.vencimento).toLocaleDateString('pt-BR')}
-                      </Typography>
-                    </Box>
-                  )}
+              {cartoes.length === 0 ? (
+                <Box sx={{ textAlign: 'center', py: 4 }}>
+                  <Description sx={{ fontSize: 48, color: 'text.secondary', mb: 1 }} />
+                  <Typography color="text.secondary">Nenhum cartão</Typography>
                 </Box>
-              ))}
+              ) : (
+                cartoes.map((cartao) => (
+                  <Box key={cartao.id} sx={{ mb: 2, p: 2, border: 1, borderColor: 'divider', borderRadius: 2 }}>
+                    <Typography variant="subtitle2" gutterBottom>
+                      {cartao.tipo || cartao.bandeira} • {cartao.numero}
+                    </Typography>
+                    {cartao.limite > 0 && (
+                      <Box sx={{ mt: 1 }}>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                          <Typography variant="body2">Utilizado</Typography>
+                          <Typography variant="body2">
+                            {formatCurrency(cartao.utilizado || 0)} / {formatCurrency(cartao.limite)}
+                          </Typography>
+                        </Box>
+                        <LinearProgress
+                          variant="determinate"
+                          value={cartao.limite ? ((cartao.utilizado || 0) / cartao.limite) * 100 : 0}
+                          sx={{ height: 8, borderRadius: 4 }}
+                        />
+                      </Box>
+                    )}
+                  </Box>
+                ))
+              )}
             </CardContent>
           </Card>
         </Grid>
       </Grid>
 
-      {/* Dialog PIX */}
       <Dialog open={pixDialog} onClose={() => setPixDialog(false)} maxWidth="sm" fullWidth>
         <DialogTitle>Enviar PIX</DialogTitle>
         <DialogContent>
@@ -426,7 +401,7 @@ const Dashboard = ({ user }) => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setPixDialog(false)}>Cancelar</Button>
-          <Button onClick={handlePixSend} variant="contained">
+          <Button onClick={handlePixSend} variant="contained" disabled={!pixData.chave || !pixData.valor}>
             Enviar PIX
           </Button>
         </DialogActions>

@@ -30,6 +30,7 @@ api.interceptors.response.use(
 export const apiService = {
   getContas: () => api.get('/contas').then(r => r.data),
   getConta: (id) => api.get(`/contas/${id}`).then(r => r.data),
+  getExtratoConta: (contaId, params) => api.get(`/contas/${contaId}/extrato`, { params }).then(r => r.data),
   getTransacoes: (contaId, params) => api.get('/transacoes', { params: { contaId, ...params } }).then(r => r.data),
   criarTransacao: (data) => api.post('/transacoes', data).then(r => r.data),
 
@@ -38,6 +39,25 @@ export const apiService = {
   getChavesPix: () => api.get('/pix/chaves').then(r => r.data),
   criarChavePix: (data) => api.post('/pix/chaves', data).then(r => r.data),
   deletarChavePix: (id) => api.delete(`/pix/chaves/${id}`).then(r => r.data),
+  getQrCodePix: (data) => api.post('/pix/qrcode', data).then(r => r.data),
+  lerQrCodePix: (data) => api.post('/pix/qrcode/ler', data).then(r => r.data),
+  getHistoricoPix: (params) => api.get('/pix/historico', { params }).then(r => r.data),
+
+  enviarTed: (data) => api.post('/ted/enviar', data).then(r => r.data),
+  getHistoricoTed: (params) => api.get('/ted/historico', { params }).then(r => r.data),
+  getTed: (id) => api.get(`/ted/${id}`).then(r => r.data),
+
+  getBoletos: (params) => api.get('/boletos', { params }).then(r => r.data),
+  getBoleto: (id) => api.get(`/boletos/${id}`).then(r => r.data),
+  emitirBoleto: (data) => api.post('/boletos', data).then(r => r.data),
+  cancelarBoleto: (id) => api.post(`/boletos/${id}/cancelar`).then(r => r.data),
+  pagarBoleto: (data) => api.post('/boletos/pagar', data).then(r => r.data),
+
+  getSimulacoesCredito: (params) => api.get('/credito/simulacoes', { params }).then(r => r.data),
+  simularCredito: (data) => api.post('/credito/simular', data).then(r => r.data),
+  getSolicitacoesCredito: (params) => api.get('/credito/solicitacoes', { params }).then(r => r.data),
+  solicitarCredito: (data) => api.post('/credito/solicitacoes', data).then(r => r.data),
+  getSolicitacaoCredito: (id) => api.get(`/credito/solicitacoes/${id}`).then(r => r.data),
 
   getCartoes: (contaId) => api.get(`/cartoes/conta/${contaId}`).then(r => r.data),
   emitirCartao: (data) => api.post('/cartoes/emitir', data).then(r => r.data),
@@ -50,6 +70,7 @@ export const apiService = {
 
   fazerTransferencia: (data) => api.post('/transacoes/transferir', data).then(r => r.data),
 
+  getClienteAtual: () => api.get('/clientes/me').then(r => r.data),
   getPerfil: () => api.get('/usuarios/me').then(r => r.data),
   atualizarPerfil: (data) => api.put('/usuarios/me', data).then(r => r.data),
   alterarSenha: (data) => api.put('/usuarios/me/senha', data).then(r => r.data),
@@ -59,8 +80,6 @@ export const apiService = {
 
   getConfiguracoes: () => api.get('/usuarios/me/configuracoes').then(r => r.data),
   atualizarConfiguracoes: (data) => api.put('/usuarios/me/configuracoes', data).then(r => r.data),
-
-  getExtrato: (contaId, params) => api.get(`/contas/${contaId}/extrato`, { params }).then(r => r.data),
 };
 
 export default apiService;
