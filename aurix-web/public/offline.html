@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#1565C0" />
+    <title>Aurix Banking - Sem Conexão</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        background: linear-gradient(135deg, #1565C0 0%, #1976d2 50%, #42a5f5 100%);
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #333;
+      }
+
+      .container {
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+        padding: 48px;
+        max-width: 440px;
+        width: 90%;
+        text-align: center;
+      }
+
+      .icone {
+        font-size: 72px;
+        margin-bottom: 24px;
+        display: block;
+      }
+
+      .titulo {
+        font-size: 24px;
+        font-weight: 700;
+        color: #1565C0;
+        margin-bottom: 12px;
+      }
+
+      .subtitulo {
+        font-size: 16px;
+        color: #666;
+        margin-bottom: 32px;
+        line-height: 1.5;
+      }
+
+      .mensagem {
+        background: #f5f5f5;
+        border-radius: 8px;
+        padding: 16px;
+        margin-bottom: 24px;
+        font-size: 14px;
+        color: #555;
+        line-height: 1.6;
+      }
+
+      .btn-retry {
+        background: #1565C0;
+        color: white;
+        border: none;
+        padding: 14px 32px;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        width: 100%;
+        max-width: 280px;
+      }
+
+      .btn-retry:hover {
+        background: #0D47A1;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(21, 101, 192, 0.3);
+      }
+
+      .btn-retry:active {
+        transform: translateY(0);
+      }
+
+      .btn-retry:disabled {
+        background: #90CAF9;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+      }
+
+      .dicas {
+        margin-top: 24px;
+        font-size: 13px;
+        color: #999;
+        line-height: 1.6;
+      }
+
+      .dicas strong {
+        color: #666;
+      }
+
+      .logo {
+        font-size: 18px;
+        font-weight: 700;
+        color: #1565C0;
+        margin-bottom: 8px;
+      }
+
+      .spinner {
+        display: none;
+        width: 20px;
+        height: 20px;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-top-color: white;
+        border-radius: 50%;
+        animation: girar 0.8s linear infinite;
+        margin: 0 auto;
+      }
+
+      @keyframes girar {
+        to { transform: rotate(360deg); }
+      }
+
+      .loading .spinner {
+        display: block;
+      }
+
+      .loading .btn-texto {
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="logo">Aurix Banking</div>
+      <span class="icone">📡</span>
+      <h1 class="titulo">Sem Conexão</h1>
+      <p class="subtitulo">
+        Parece que você está sem conexão com a internet.
+        Verifique sua rede e tente novamente.
+      </p>
+      <div class="mensagem">
+        Algumas funcionalidades podem estar indisponíveis enquanto a conexão estiver
+        interrompida. Dados em cache podem estar disponíveis.
+      </div>
+      <button class="btn-retry" id="btnRetry" onclick="tentarNovamente()">
+        <span class="btn-texto">Tentar Novamente</span>
+        <span class="spinner"></span>
+      </button>
+      <div class="dicas">
+        <strong>Dicas:</strong><br>
+        - Verifique se o Wi-Fi está conectado<br>
+        - Tente alternar entre Wi-Fi e dados móveis<br>
+        - Reinicie o roteador se necessário
+      </div>
+    </div>
+
+    <script>
+      function tentarNovamente() {
+        var btn = document.getElementById('btnRetry');
+        btn.classList.add('loading');
+        btn.disabled = true;
+
+        setTimeout(function() {
+          if (navigator.onLine) {
+            window.location.href = '/';
+          } else {
+            btn.classList.remove('loading');
+            btn.disabled = false;
+          }
+        }, 2000);
+      }
+
+      window.addEventListener('online', function() {
+        window.location.href = '/';
+      });
+    </script>
+  </body>
+</html>

@@ -1,9 +1,27 @@
 {
-  "short_name": "AUREUS",
-  "name": "AUREUS Financial Cloud Unified Suite",
-  "icons": [],
-  "start_url": ".",
+  "name": "Aurix Internet Banking",
+  "short_name": "Aurix",
+  "description": "Internet Banking Aurix - Acesse sua conta, faça transferências, PIX e muito mais",
+  "start_url": "/",
   "display": "standalone",
-  "theme_color": "#0F172A",
-  "background_color": "#090D16"
+  "theme_color": "#1565C0",
+  "background_color": "#FFFFFF",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "lang": "pt-BR",
+  "categories": ["finance", "banking"],
+  "icons": [
+    {
+      "src": "%PUBLIC_URL%/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "%PUBLIC_URL%/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
 }
